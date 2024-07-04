@@ -1,7 +1,7 @@
 use crate::back;
+use chrono::Datelike;
 use color_print::cformat;
 use std::fmt;
-use chrono::Datelike;
 
 #[derive(thiserror::Error, Debug)]
 pub enum CalError {

@@ -194,21 +194,12 @@ impl Date {
             .iter()
             .filter(|&e| match e {
                 Event::Single {
-                    description: _,
-                    year,
-                    month,
-                    day,
+                    year, month, day, ..
                 } => year == &self.year && month == &self.month && day == &check_day,
-                Event::Yearly {
-                    description: _,
-                    months,
-                    day,
-                } => months.iter().any(|mnt| mnt == &self.month) && day == &check_day,
-                Event::YearlyByWeekday {
-                    description: _,
-                    months,
-                    days,
-                } => {
+                Event::Yearly { months, day, .. } => {
+                    months.iter().any(|mnt| mnt == &self.month) && day == &check_day
+                }
+                Event::YearlyByWeekday { months, days, .. } => {
                     months.iter().any(|mnt| mnt == &self.month)
                         && days
                             .iter()
