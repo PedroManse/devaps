@@ -24,7 +24,7 @@ pub struct Link {
     pub(crate) id: usize,
     pub(crate) from_node_id: usize,
     pub(crate) to_node_id: usize,
-    pub(crate) props: HashMap<String, String>,
+    pub(crate) props: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug)]
@@ -32,7 +32,7 @@ pub struct Node {
     #[allow(dead_code)]
     pub(crate) id: usize,
     pub(crate) name: String,
-    pub(crate) props: HashMap<String, String>,
+    pub(crate) props: Option<HashMap<String, String>>,
     pub(crate) links: HashSet<usize>,
     pub(crate) back_links: HashSet<usize>,
 }
@@ -76,7 +76,7 @@ impl Graph {
         &mut self,
         from_node_id: usize,
         to_node_id: usize,
-        props: HashMap<String, String>,
+        props: Option<HashMap<String, String>>,
     ) -> Result<&Link, RotError> {
         let id = count_link();
         let l = Link {
@@ -91,7 +91,7 @@ impl Graph {
         Ok(&self.links[id])
     }
 
-    pub fn new_node<S>(&mut self, name: S, props: HashMap<String, String>) -> &Node
+    pub fn new_node<S>(&mut self, name: S, props: Option<HashMap<String, String>>) -> &Node
     where
         S: Into<String>,
     {
@@ -100,7 +100,7 @@ impl Graph {
         self.nodes_by_name.insert(name.clone(), id);
         let n = Node {
             id,
-            name: name,
+            name,
             props,
             links: HashSet::new(),
             back_links: HashSet::new(),

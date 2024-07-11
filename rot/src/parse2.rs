@@ -21,13 +21,12 @@ pub enum Parser {
 
 pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
     use Parser as S;
-    let mut chars = text.chars();
     let mut items = vec![];
     let mut state = S::Nothing;
     let mut buffer = String::new();
     let mut buffer_buffer: Vec<String> = Vec::new();
 
-    while let Some(chr) = chars.next() {
+    for chr in text.chars() {
         match (&state, chr) {
             (S::Nothing, ' ' | '\n' | '\t') => {}
             (S::Nothing, '#') => state = Parser::OnComment,
@@ -108,13 +107,12 @@ enum PropParser {
 
 fn prop_to_hashmap(prop: String) -> Result<HashMap<String, String>, RotError> {
     use PropParser as S;
-    let mut chars = prop.chars();
     let mut items = HashMap::new();
     let mut state = S::ShouldKey;
     let mut buffer = String::new();
     let mut key_buffer = String::new();
 
-    while let Some(chr) = chars.next() {
+    for chr in prop.chars() {
         match (&state, chr) {
             (S::OnKey, ':') => {
                 key_buffer = buffer;
@@ -156,4 +154,3 @@ fn prop_to_hashmap(prop: String) -> Result<HashMap<String, String>, RotError> {
     }
     Ok(items)
 }
-

@@ -11,13 +11,11 @@ pub(crate) mod rot {
             self.0
                 .nodes
                 .iter()
-                .map(|n| self.display_node(f, n))
-                .collect::<Result<_, _>>()?;
+                .try_for_each(|n| self.display_node(f, n))?;
             self.0
                 .links
                 .iter()
-                .map(|n| self.display_link(f, n))
-                .collect::<Result<_, _>>()
+                .try_for_each(|n| self.display_link(f, n))
         }
     }
 
@@ -37,9 +35,13 @@ pub(crate) mod rot {
         fn display_props(
             &self,
             f: &mut fmt::Formatter<'_>,
-            p: &HashMap<String, String>,
+            p: &Option<HashMap<String, String>>,
         ) -> fmt::Result {
-            f.debug_map().entries(p).finish()
+            if let Some(p) = p {
+                f.debug_map().entries(p).finish()
+            } else {
+                Ok(())
+            }
         }
     }
 }
@@ -57,13 +59,13 @@ pub(crate) mod svg {
 
 pub mod to {
     use super::*;
-    pub fn rot<'a>(g: &'a Graph) -> rot::Export<'a> {
+    pub fn rot(g: &Graph) -> rot::Export {
         rot::Export(g)
     }
-    pub fn dot<'a>(g: &'a Graph) -> dot::Export<'a> {
+    pub fn dot(g: &Graph) -> dot::Export {
         dot::Export(g)
     }
-    pub fn svg<'a>(g: &'a Graph) -> svg::Export<'a> {
+    pub fn svg(g: &Graph) -> svg::Export {
         svg::Export(g)
     }
 }
