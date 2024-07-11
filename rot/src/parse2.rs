@@ -10,7 +10,7 @@ pub enum Item {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) enum Parser {
+pub enum Parser {
     Nothing,
     OnNode,
     OnNodeVec,
@@ -76,7 +76,6 @@ pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
                 state = Parser::Nothing;
                 buffer = String::new();
             }
-
             (S::OnNodeVec, c @ '{') => return Err(RotError::IlegalCharName(c, buffer)),
             (S::OnNode, c @ ',') => return Err(RotError::IlegalCharName(c, buffer)),
             (S::OnLink, chr) => {
@@ -86,6 +85,8 @@ pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
                 state = Parser::OnNode;
                 buffer.push(chr);
             }
+            //TODO OnProp should make OnProp use prop_to_hashmap without buffer
+            // prop_to_hashmap uses a char iterator anyway
             (S::OnNodeVec | S::OnNode | S::OnProp, chr) => buffer.push(chr),
         }
         //println!("{state:?}");

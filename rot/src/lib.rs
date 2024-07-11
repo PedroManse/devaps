@@ -29,5 +29,4 @@ pub enum RotError {
 
 pub mod export;
 pub mod graph;
-pub mod parse;
 pub mod parse2;
