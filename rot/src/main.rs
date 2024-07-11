@@ -1,20 +1,15 @@
 use rot::{
     graph::Graph,
-    parse,
+    parse2,
     RotError
 };
 use std::fs;
 
-//line.rot
-///A
-///B
-///C
-///A->C
-
 fn main() -> Result<(), RotError> {
-    let code = fs::read_to_string("graphs/line.rot").unwrap();
-    let p = parse::parse(code)?;
+    let code = fs::read_to_string("graphs/n-1.rot").unwrap();
+    let p = parse2::parse(code)?;
     println!("{p:#?}");
+
     //let mut graph = Graph::default();
     //graph.new_node("A", HashMap::new());
     //graph.new_node("B", HashMap::new());
