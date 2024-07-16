@@ -1,35 +1,23 @@
 use rot::RotError;
 use std::fs;
-
-fn parse(code: String) -> Result<Vec<rot::parse2::Item>, RotError> {
-    rot::parse2::parse(code)
-}
-
-fn graphs(items_pack: Vec<Vec<rot::parse2::Item>>) -> Result<rot::graph::Graph, RotError> {
-    let mut graph = rot::graph::Graph::new();
-    for items in items_pack {
-        rot::builder::build(&mut graph, items)?;
-    }
-    Ok(graph)
-}
-
 fn help() -> ! {
     eprintln!("Usage:\n  rot [files.rot] [rot/svg/pdf]");
     std::process::exit(2)
 }
 
-//TODO figure out problem with prop if args: graphs/*
+// λ./rot graphs/line.rot graphs/link-prop.rot rot
+// gives incorrect output
+
 fn main() -> Result<(), RotError> {
     let mut args = std::env::args().skip(1);
     let export = args.next_back().unwrap_or_else(|| help());
 
-    let items_pack: Vec<_> = args
-        .map(|input| {
-            let code = fs::read_to_string(input).unwrap();
-            parse(code)
-        })
-        .collect::<Result<_, _>>()?;
-    let graph = graphs(items_pack)?;
+    let mut graph = rot::graph::Graph::new();
+    for input in args {
+        let code = fs::read_to_string(input).unwrap();
+        let items = rot::parse2::parse(code)?;
+        rot::builder::build(&mut graph, items)?;
+    }
 
     use rot::export::to as exp;
     let out = match export.as_ref() {

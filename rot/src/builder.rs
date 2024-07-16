@@ -107,25 +107,28 @@ pub fn build(graph: &mut graph::Graph, items: Vec<Item>) -> Result<(), RotError>
             }
             (BuilderState::ShouldLinkNode(from, link_prop), Some(S::Link), S::Node(to)) => {
                 let from_id = graph.get_id_by_name(from)?;
-                let to_id = graph
-                    .get_id_by_name(&to)
-                    .or_else(|_| graph.new_node(to, prop).map(|nn|nn.id))?;
-                // bad clone :(
+                let to_id = {
+                    let to_node = graph.make_or_get_node_mut(&to)?;
+                    if let Some(prop) = prop {
+                        to_node.extend(prop);
+                    }
+                    to_node.id
+                };
                 graph.link_nodes(from_id, to_id, link_prop.clone())?;
                 state = SDef;
             }
             (BuilderState::ShouldLinkNode(from, link_prop), Some(S::Link), S::NodeVec(tos)) => {
                 let from_id = graph.get_id_by_name(from)?;
                 let to_ids: Vec<_> = tos
-                    .iter()
+                    .into_iter()
                     .map(|n| {
-                        let id = graph.get_id_by_name(n)
-                        .or_else(|_| graph.new_node(n, None).map(|nn|nn.id))?;
-                        // NodeVec can't use prop
-                        Ok(id)
+                        let to_node = graph.make_or_get_node_mut(n)?;
+                        if let Some(prop) = prop.clone() {
+                            to_node.extend(prop);
+                        }
+                        Ok(to_node.id)
                     })
                     .collect::<Result<_, _>>()?;
-                //TODO implicit NodeVec creation; use prop
                 for to_id in to_ids {
                     graph.link_nodes(from_id, to_id, link_prop.clone())?;
                 }
