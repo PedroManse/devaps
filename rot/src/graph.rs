@@ -2,17 +2,10 @@ use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use crate::RotError;
 
-static NODE_COUNT: AtomicUsize = AtomicUsize::new(0);
-fn count_node() -> usize {
-    NODE_COUNT.fetch_add(1, Ordering::SeqCst)
-}
-static LINK_COUNT: AtomicUsize = AtomicUsize::new(0);
-fn count_link() -> usize {
-    LINK_COUNT.fetch_add(1, Ordering::SeqCst)
-}
-
 #[derive(Debug, Default)]
 pub struct Graph {
+    node_count: AtomicUsize,
+    link_count: AtomicUsize,
     pub(crate) nodes: Vec<Node>,
     pub(crate) links: Vec<Link>,
     pub(crate) nodes_by_name: HashMap<String, usize>,
@@ -49,6 +42,15 @@ impl Node {
 }
 
 impl Graph {
+    pub fn new() -> Graph {
+        Graph::default()
+    }
+    fn count_node(&self) -> usize {
+        self.node_count.fetch_add(1, Ordering::SeqCst)
+    }
+    fn count_link(&self) -> usize {
+        self.link_count.fetch_add(1, Ordering::SeqCst)
+    }
     pub fn get_id_by_name(&mut self, name: &str) -> Result<usize, RotError> {
         self.nodes_by_name
             .get(name)
@@ -98,7 +100,7 @@ impl Graph {
         to_node_id: usize,
         props: Option<HashMap<String, String>>,
     ) -> Result<&Link, RotError> {
-        let id = count_link();
+        let id = self.count_link();
         let l = Link {
             id,
             from_node_id,
@@ -134,7 +136,7 @@ impl Graph {
         if let Some(_) = self.nodes_by_name.get(&name) {
             return Err(RotError::NodeOverwrite(name));
         }
-        let id = count_node();
+        let id = self.count_node();
         self.nodes_by_name.insert(name.clone(), id);
         let n = Node {
             id,

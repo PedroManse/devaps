@@ -1,5 +1,5 @@
-use crate::graph::{self, Graph};
-use crate::parse2::{self, Item};
+use crate::graph;
+use crate::parse2::Item;
 use crate::RotError;
 use std::collections::HashMap;
 
@@ -71,13 +71,12 @@ pub fn build(items: Vec<Item>) -> Result<graph::Graph, RotError> {
     let mut state = BuilderState::Nothing;
     let items = to_builder_node(items)?;
     let items = items.into_iter();
-    let mut graph = graph::Graph::default();
+    let mut graph = graph::Graph::new();
     let mut last: Option<BuilderEntity> = None;
     for item in items {
         let prop = item.prop;
         let item = item.item;
         let this = item.clone();
-        println!("{state:?} {last:?} {item:?}");
         match (&state, last, item) {
             (SDef, None | Some(S::Node(..)) | Some(S::NodeVec(..)), S::NodeVec(ns)) => {
                 ns.into_iter().map(|n| {

@@ -29,7 +29,6 @@ pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
     let mut buffer_buffer: Vec<String> = Vec::new();
 
     for chr in text.chars() {
-        println!("{state:?} {chr:?}");
         match (&state, chr) {
             (S::OnLinkEnd | S::OnNodeVecEnd | S::Nothing, ' ' | '\n' | '\t') => {}
             (S::OnLinkEnd | S::OnNodeVecEnd | S::Nothing, '#') => state = Parser::OnComment,
@@ -99,12 +98,10 @@ pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
             // prop_to_hashmap uses a char iterator anyway
             (S::OnNodeVec | S::OnNode | S::OnProp, chr) => buffer.push(chr),
         }
-        //println!("{state:?}");
     }
 
     match state {
-        Parser::Nothing => Ok(items),
-        Parser::OnNode => Ok(items),
+        S::OnNode | S::Nothing | S::OnNodeVecEnd | S::OnLinkEnd => Ok(items),
         a => Err(RotError::UnclosedState(a)),
     }
 }
