@@ -37,6 +37,17 @@ pub struct Node {
     pub(crate) back_links: HashSet<usize>,
 }
 
+impl Node {
+    pub fn extend(&mut self, props: HashMap<String, String>) {
+        self.props = Some(if let Some(mut old_props) = self.props.clone() {
+            old_props.extend(props);
+            old_props
+        } else {
+            props
+        });
+    }
+}
+
 impl Graph {
     pub fn get_id_by_name(&mut self, name: &str) -> Result<usize, RotError> {
         self.nodes_by_name
@@ -72,6 +83,15 @@ impl Graph {
             Ok(&mut self.links[id])
         }
     }
+    pub fn extend_prop(
+        &mut self,
+        node_id: usize,
+        prop: HashMap<String, String>,
+    ) -> Result<&Node, RotError> {
+        let node = self.get_node_by_id_mut(node_id)?;
+        node.extend(prop);
+        Ok(node)
+    }
     pub fn link_nodes(
         &mut self,
         from_node_id: usize,
@@ -91,11 +111,29 @@ impl Graph {
         Ok(&self.links[id])
     }
 
-    pub fn new_node<S>(&mut self, name: S, props: Option<HashMap<String, String>>) -> &Node
+    pub fn make_or_get_node_mut<S>(&mut self, name: S) -> Result<&mut Node, RotError>
     where
         S: Into<String>,
     {
         let name = name.into();
+        let maybe_id = self.get_id_by_name(&name);
+        match maybe_id {
+            Ok(id)=>{
+                Ok(&mut self.nodes[id])
+            }
+            Err(_)=>{
+               self.new_node(name, None)
+            }
+        }
+    }
+    pub fn new_node<S>(&mut self, name: S, props: Option<HashMap<String, String>>) -> Result<&mut Node, RotError>
+    where
+        S: Into<String>,
+    {
+        let name = name.into();
+        if let Some(_) = self.nodes_by_name.get(&name) {
+            return Err(RotError::NodeOverwrite(name));
+        }
         let id = count_node();
         self.nodes_by_name.insert(name.clone(), id);
         let n = Node {
@@ -106,6 +144,6 @@ impl Graph {
             back_links: HashSet::new(),
         };
         self.nodes.push(n);
-        &self.nodes[id]
+        Ok(&mut self.nodes[id])
     }
 }

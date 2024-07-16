@@ -14,6 +14,8 @@ pub enum Parser {
     Nothing,
     OnNode,
     OnNodeVec,
+    OnNodeVecEnd,
+    OnLinkEnd,
     OnLink,
     OnProp,
     OnComment,
@@ -27,12 +29,13 @@ pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
     let mut buffer_buffer: Vec<String> = Vec::new();
 
     for chr in text.chars() {
+        println!("{state:?} {chr:?}");
         match (&state, chr) {
-            (S::Nothing, ' ' | '\n' | '\t') => {}
-            (S::Nothing, '#') => state = Parser::OnComment,
+            (S::OnLinkEnd | S::OnNodeVecEnd | S::Nothing, ' ' | '\n' | '\t') => {}
+            (S::OnLinkEnd | S::OnNodeVecEnd | S::Nothing, '#') => state = Parser::OnComment,
             (S::OnComment, '\n') => state = Parser::Nothing,
             (S::OnComment, _) => {}
-            (S::Nothing, '[') => {
+            (S::OnLinkEnd | S::OnNodeVecEnd | S::Nothing, '[') => {
                 state = Parser::OnNodeVec;
             }
             (S::OnNodeVec, ',') => {
@@ -44,11 +47,11 @@ pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
                     buffer_buffer.push(buffer);
                 }
                 items.push(Item::NodeVec(buffer_buffer));
-                state = Parser::Nothing;
+                state = Parser::OnNodeVecEnd;
                 buffer = String::new();
                 buffer_buffer = Vec::new();
             }
-            (S::Nothing, '-') => {
+            (S::OnNodeVecEnd | S::Nothing, '-') => {
                 state = Parser::OnLink;
             }
             (S::OnNode, '-') => {
@@ -58,11 +61,19 @@ pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
             }
             (S::OnLink, '>') => {
                 items.push(Item::Link);
-                state = Parser::Nothing;
+                state = Parser::OnLinkEnd;
             }
             (S::OnNode, '\n') => {
                 items.push(Item::Node(buffer));
                 state = Parser::Nothing;
+                buffer = String::new();
+            }
+            (S::OnLinkEnd, '{') => {
+                state = Parser::OnProp;
+                buffer = String::new();
+            }
+            (S::OnNodeVecEnd, '{') => {
+                state = Parser::OnProp;
                 buffer = String::new();
             }
             (S::OnNode, '{') => {
@@ -80,7 +91,7 @@ pub fn parse(text: String) -> Result<Vec<Item>, RotError> {
             (S::OnLink, chr) => {
                 return Err(RotError::LinkSyntaxError(chr));
             }
-            (S::Nothing, chr) => {
+            (S::OnLinkEnd | S::OnNodeVecEnd | S::Nothing, chr) => {
                 state = Parser::OnNode;
                 buffer.push(chr);
             }

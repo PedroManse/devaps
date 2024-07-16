@@ -7,6 +7,8 @@ pub enum RotError {
     NoNodeId(usize),
     #[error("No such link #{0}")]
     NoLinkId(usize),
+    #[error("Tried to overwrite node {0}")]
+    NodeOverwrite(String),
 
     // parser
     #[error("Problem parsing .rot file\nUnclosed State {0:?}")]
@@ -29,6 +31,8 @@ pub enum RotError {
     // builder
     #[error("Problem building graph: property item followed by property item \"{{...}}{{...}}\"")]
     DoubleProp,
+    #[error("Problem building graph: link item followed by link item \"->->\"")]
+    DoubleLink,
 }
 
 pub mod export;
