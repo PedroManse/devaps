@@ -25,8 +25,13 @@ pub enum RotError {
     ValueWithoutKey(String),
     #[error("Problem parsing .rot file\nKey {0} followed by ilegal char {0}, expecting either '\"' or whitespace")]
     DidntStartValue(String, char),
+
+    // builder
+    #[error("Problem building graph: property item followed by property item \"{{...}}{{...}}\"")]
+    DoubleProp,
 }
 
 pub mod export;
 pub mod graph;
 pub mod parse2;
+pub mod builder;

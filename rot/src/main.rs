@@ -1,6 +1,6 @@
 use rot::{
-//    graph::Graph,
     parse2,
+    builder,
     RotError
 };
 use std::fs;
@@ -8,7 +8,8 @@ use std::fs;
 fn main() -> Result<(), RotError> {
     let code = fs::read_to_string("graphs/n-1.rot").unwrap();
     let p = parse2::parse(code)?;
-    println!("{p:#?}");
+    //println!("{p:#?}");
+    builder::build(p)?;
 
     //let mut graph = Graph::default();
     //graph.new_node("A", HashMap::new());

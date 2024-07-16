@@ -1,7 +1,7 @@
 use crate::RotError;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Item {
     NodeVec(Vec<String>),
     Props(HashMap<String, String>),
