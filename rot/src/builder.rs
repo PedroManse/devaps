@@ -65,13 +65,12 @@ enum BuilderState {
     ShouldLinkNodeVec(Vec<String>, Option<HashMap<String, String>>),
 }
 
-pub fn build(items: Vec<Item>) -> Result<graph::Graph, RotError> {
+pub fn build(graph: &mut graph::Graph, items: Vec<Item>) -> Result<(), RotError> {
     use BuilderEntity as S;
     use BuilderState::Nothing as SDef;
     let mut state = BuilderState::Nothing;
     let items = to_builder_node(items)?;
     let items = items.into_iter();
-    let mut graph = graph::Graph::new();
     let mut last: Option<BuilderEntity> = None;
     for item in items {
         let prop = item.prop;
@@ -107,7 +106,7 @@ pub fn build(items: Vec<Item>) -> Result<graph::Graph, RotError> {
                 state = BuilderState::ShouldLinkNode(n, prop);
             }
             (BuilderState::ShouldLinkNode(from, link_prop), Some(S::Link), S::Node(to)) => {
-                let from_id = graph.get_id_by_name(&from)?;
+                let from_id = graph.get_id_by_name(from)?;
                 let to_id = graph
                     .get_id_by_name(&to)
                     .or_else(|_| graph.new_node(to, prop).map(|nn|nn.id))?;
@@ -116,7 +115,7 @@ pub fn build(items: Vec<Item>) -> Result<graph::Graph, RotError> {
                 state = SDef;
             }
             (BuilderState::ShouldLinkNode(from, link_prop), Some(S::Link), S::NodeVec(tos)) => {
-                let from_id = graph.get_id_by_name(&from)?;
+                let from_id = graph.get_id_by_name(from)?;
                 let to_ids: Vec<_> = tos
                     .iter()
                     .map(|n| {
@@ -178,6 +177,5 @@ pub fn build(items: Vec<Item>) -> Result<graph::Graph, RotError> {
         }
         last = Some(this);
     }
-    //TODO deal with last
-    Ok(graph)
+    Ok(())
 }

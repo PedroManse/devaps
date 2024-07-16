@@ -133,7 +133,7 @@ impl Graph {
         S: Into<String>,
     {
         let name = name.into();
-        if let Some(_) = self.nodes_by_name.get(&name) {
+        if self.nodes_by_name.contains_key(&name) {
             return Err(RotError::NodeOverwrite(name));
         }
         let id = self.count_node();
