@@ -5,9 +5,6 @@ fn help() -> ! {
     std::process::exit(2)
 }
 
-// λ./rot graphs/line.rot graphs/link-prop.rot rot
-// gives incorrect output
-
 fn main() -> Result<(), RotError> {
     let mut args = std::env::args().skip(1);
     let export = args.next_back().unwrap_or_else(|| help());
@@ -20,14 +17,13 @@ fn main() -> Result<(), RotError> {
     }
 
     use rot::export::to as exp;
-    let out = match export.as_ref() {
+    match export.as_ref() {
         "rot" => exp::rot(&graph),
-        "svg" => todo!(),
-        "png" => todo!(),
+        "dot" => exp::dot(&graph),
+        //"svg" => todo!(),
+        //"png" => todo!(),
         _ => help(),
-    };
-
-    println!("{}", out);
+    }?;
     Ok(())
 }
 
