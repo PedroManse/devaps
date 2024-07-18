@@ -33,9 +33,15 @@ pub enum RotError {
     DoubleProp,
     #[error("Problem building graph: link item followed by link item \"->->\"")]
     DoubleLink,
+
+    // dot exporter
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
+    #[error("Can't take dot/graphviz stdio stream")]
+    MissingStdioError,
 }
 
+pub mod builder;
 pub mod export;
 pub mod graph;
 pub mod parse2;
-pub mod builder;

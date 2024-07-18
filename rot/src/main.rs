@@ -1,7 +1,7 @@
 use rot::RotError;
 use std::fs;
 fn help() -> ! {
-    eprintln!("Usage:\n  rot [files.rot] [rot/svg/pdf]");
+    eprintln!("Usage:\n  rot [files.rot] [dot/any dot -T type]");
     std::process::exit(2)
 }
 
@@ -20,9 +20,7 @@ fn main() -> Result<(), RotError> {
     match export.as_ref() {
         "rot" => exp::rot(&graph),
         "dot" => exp::dot(&graph),
-        //"svg" => todo!(),
-        //"png" => todo!(),
-        _ => help(),
+        to => exp::dotex(&graph, to),
     }?;
     Ok(())
 }

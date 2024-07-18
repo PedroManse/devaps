@@ -1,6 +1,6 @@
+use crate::RotError;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use crate::RotError;
 
 #[derive(Debug, Default)]
 pub struct Graph {
@@ -120,15 +120,15 @@ impl Graph {
         let name = name.into();
         let maybe_id = self.get_id_by_name(&name);
         match maybe_id {
-            Ok(id)=>{
-                Ok(&mut self.nodes[id])
-            }
-            Err(_)=>{
-               self.new_node(name, None)
-            }
+            Ok(id) => Ok(&mut self.nodes[id]),
+            Err(_) => self.new_node(name, None),
         }
     }
-    pub fn new_node<S>(&mut self, name: S, props: Option<HashMap<String, String>>) -> Result<&mut Node, RotError>
+    pub fn new_node<S>(
+        &mut self,
+        name: S,
+        props: Option<HashMap<String, String>>,
+    ) -> Result<&mut Node, RotError>
     where
         S: Into<String>,
     {

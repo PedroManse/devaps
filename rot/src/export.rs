@@ -5,7 +5,7 @@ use std::fmt;
 
 pub(crate) mod rot {
     use super::*;
-    pub (crate) fn export(g: &Graph) -> Result<(), RotError> {
+    pub(crate) fn export(g: &Graph) -> Result<(), RotError> {
         println!("{}", Export(g));
         Ok(())
     }
@@ -53,16 +53,15 @@ pub(crate) mod rot {
 
 pub(crate) mod dot {
     use super::*;
-    pub (crate) fn export(g: &Graph) -> Result<(), RotError> {
-        println!("digraph RotGraph {{");
+    pub(crate) fn export(g: &Graph) -> Result<(), RotError> {
         println!("{}", Export(g));
-        println!("}}");
         Ok(())
     }
 
-    struct Export<'a>(pub(crate) &'a Graph);
+    pub(super) struct Export<'a>(pub(crate) &'a Graph);
     impl fmt::Display for Export<'_> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "digraph RotGraph {{")?;
             self.0
                 .nodes
                 .iter()
@@ -70,7 +69,8 @@ pub(crate) mod dot {
             self.0
                 .links
                 .iter()
-                .try_for_each(|n| self.display_link(f, n))
+                .try_for_each(|n| self.display_link(f, n))?;
+            write!(f, "}}")
         }
     }
 
@@ -95,25 +95,34 @@ pub(crate) mod dot {
         ) -> fmt::Result {
             if let Some(p) = p {
                 f.write_str(" [")?;
-                p.iter().try_for_each(|(k, v)|{
-                    write!(f, "{k}={v},")
-                })?;
+                p.iter().try_for_each(|(k, v)| write!(f, "{k}={v},"))?;
                 f.write_str("]")?;
             };
             Ok(())
         }
     }
-
 }
 
-pub(crate) mod svg {
+pub(crate) mod dotex {
     use super::*;
-    pub (crate) fn export(g: &Graph) -> Result<(), RotError> {
-        todo!()
+    pub(crate) fn export(graph: &Graph, ex_to: &str) -> Result<(), RotError> {
+        use std::io::{self, Write};
+        use std::process::{Command, Stdio};
+        let dot_script = dot::Export(graph).to_string();
+        let mut graphviz = Command::new("dot")
+            .arg(format!("-T{}", ex_to))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()?;
+        graphviz
+            .stdin
+            .take()
+            .ok_or(RotError::MissingStdioError)?
+            .write_all(dot_script.as_bytes())?;
+        let procout = graphviz.wait_with_output()?;
+        io::stdout().write_all(&procout.stdout)?;
+        Ok(())
     }
-
-    #[allow(dead_code)]
-    pub struct Export<'a>(pub(crate) &'a Graph);
 }
 
 pub mod to {
@@ -124,7 +133,7 @@ pub mod to {
     pub fn dot(g: &Graph) -> Result<(), RotError> {
         dot::export(g)
     }
-    pub fn svg(g: &Graph) -> Result<(), RotError> {
-        svg::export(g)
+    pub fn dotex(g: &Graph, to: &str) -> Result<(), RotError> {
+        dotex::export(g, to)
     }
 }

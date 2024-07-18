@@ -78,13 +78,15 @@ pub fn build(graph: &mut graph::Graph, items: Vec<Item>) -> Result<(), RotError>
         let this = item.clone();
         match (&state, last, item) {
             (SDef, None | Some(S::Node(..)) | Some(S::NodeVec(..)), S::NodeVec(ns)) => {
-                ns.into_iter().map(|n| {
-                    let node = graph.make_or_get_node_mut(&n)?;
-                    if let Some(prop) = prop.clone() {
-                        node.extend(prop);
-                    }
-                    Ok(())
-                }).collect::<Result<Vec<_>, _>>()?;
+                ns.into_iter()
+                    .map(|n| {
+                        let node = graph.make_or_get_node_mut(&n)?;
+                        if let Some(prop) = prop.clone() {
+                            node.extend(prop);
+                        }
+                        Ok(())
+                    })
+                    .collect::<Result<Vec<_>, RotError>>()?;
             }
             (SDef, None | Some(S::Node(..)) | Some(S::NodeVec(..)), S::Node(n)) => {
                 let node = graph.make_or_get_node_mut(&n)?;
@@ -128,7 +130,7 @@ pub fn build(graph: &mut graph::Graph, items: Vec<Item>) -> Result<(), RotError>
                         }
                         Ok(to_node.id)
                     })
-                    .collect::<Result<_, _>>()?;
+                    .collect::<Result<_, RotError>>()?;
                 for to_id in to_ids {
                     graph.link_nodes(from_id, to_id, link_prop.clone())?;
                 }
@@ -144,7 +146,7 @@ pub fn build(graph: &mut graph::Graph, items: Vec<Item>) -> Result<(), RotError>
                     .collect::<Result<_, _>>()?;
                 let to_id = graph
                     .get_id_by_name(&to)
-                    .or_else(|_| graph.new_node(to, prop.clone()).map(|nn|nn.id))?;
+                    .or_else(|_| graph.new_node(to, prop.clone()).map(|nn| nn.id))?;
                 for from_id in from_ids {
                     graph.link_nodes(from_id, to_id, link_prop.clone())?;
                 }
