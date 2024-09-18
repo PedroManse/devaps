@@ -12,6 +12,14 @@ fn main() -> Result<(), std::io::Error> {
             }
         );
     }
-    println!("{count}");
+    if count > 10*1024*1024*1024 {
+        println!("{:.02}Gib", count as f64 / 1024.0 / 1024.0 / 1024.0);
+    } else if count > 10*1024*1024 {
+        println!("{:.02}Mib", count as f64 / 1024.0 / 1024.0);
+    } else if count > 10*1024 {
+        println!("{:.02}Kib", count as f64 / 1024.0);
+    } else {
+        println!("{count}b");
+    }
     Ok(())
 }
