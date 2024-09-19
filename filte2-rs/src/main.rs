@@ -38,7 +38,7 @@ fn main() -> eyre::Result<()> {
     for line in io::stdin().lock().lines() {
         let line = line?;
         if filters.compare(&line) {
-            stdout.write_all(line.as_bytes()).inspect_err(die_on_pipe)?;
+            writeln!(stdout, "{}", line).inspect_err(die_on_pipe)?;
         }
     }
     Ok(())
