@@ -1,10 +1,6 @@
 use filte_rs::*;
 use std::io::{stdin, BufRead};
 
-fn match_all(xs: &[Transformer], text: &str) -> bool {
-    xs.iter().all(|t|t.compare(text))
-}
-
 const HELP: &'static str = "
 usage filter [i](mode)(pattern)
 
@@ -45,5 +41,9 @@ fn main() -> eyre::Result<()> {
         }
     }
     Ok(())
+}
+
+fn match_all(xs: &[Transformer], text: &str) -> bool {
+    xs.iter().all(|t|t.compare(text))
 }
 

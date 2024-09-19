@@ -5,7 +5,7 @@ pub enum FilteError {
     #[error(transparent)]
     GlobSyntax(#[from] glob::PatternError),
 
-    #[error("No such filter mode {0}'")]
+    #[error("No such filter mode {0}")]
     NoFilter(char),
 
     #[error("Missing text")]
