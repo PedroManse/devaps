@@ -1,7 +1,5 @@
 #[derive(thiserror::Error, Debug)]
 pub enum FilteError {
-    #[error("No such command {0}")]
-    UnkownCommand(String),
     #[error("Closed unopened command")]
     NeedlessClose,
     #[error("Missing command")]
@@ -14,7 +12,7 @@ pub enum FilteError {
     #[error(transparent)]
     GlobSyntax(#[from] glob::PatternError),
 
-    #[error("No such filter mode {0}'")]
+    #[error("No such filter mode {0}")]
     NoFilter(char),
 
     #[error("Missing text")]
@@ -51,8 +49,8 @@ impl Filter {
     pub fn compare(&self, text: &str) -> bool {
         match self {
             Filter::Raw(r) => r.compare(text),
-            Filter::Or(rs) => rs.into_iter().any(|r| r.compare(text)),
-            Filter::And(rs) => rs.into_iter().all(|r| r.compare(text)),
+            Filter::Or(rs) => rs.iter().any(|r| r.compare(text)),
+            Filter::And(rs) => rs.iter().all(|r| r.compare(text)),
         }
     }
 }
