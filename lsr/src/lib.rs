@@ -41,14 +41,10 @@ fn display_entry(
             let name = name
                 .file_name()
                 .and_then(|f|f.to_str())
-                .unwrap_or("./");
+                .unwrap_or(".");
             f.write_str(name)?;
-            f.write_str("\n")?;
-            let down = if parent.len() == 0 {
-                name.to_string()
-            } else {
-                format!("{parent}{name}/")
-            };
+            let down = format!("{parent}{name}/");
+            f.write_str("/\n")?;
             for fl in fs.iter() {
                 display_entry(f, fl, &down)?;
             }
