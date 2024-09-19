@@ -6,6 +6,8 @@ pub enum FilteError {
     MissingCommand,
     #[error("Not closing command")]
     MissingClose,
+    #[error("Too many filters in group")]
+    TooManyFilters,
 
     #[error(transparent)]
     RegexSyntax(#[from] regex::Error),

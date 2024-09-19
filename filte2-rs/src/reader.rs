@@ -1,5 +1,6 @@
 use crate::*;
 
+#[derive(Debug)]
 enum CdFilter {
     And,
     Or,
@@ -9,11 +10,11 @@ enum CdFilter {
 }
 
 pub fn parse(args: impl Iterator<Item = String>) -> Result<Filter, FilteError> {
-    let mut cmds = compile(args).into_iter();
+    let mut cmds = compile(args);
     next(&mut cmds)
 }
 
-fn compile(args: impl Iterator<Item = String>) -> Vec<CdFilter> {
+fn compile(args: impl Iterator<Item = String>) -> impl Iterator<Item = CdFilter> {
     args.map(|arg| match arg.as_ref() {
         "and[" => CdFilter::And,
         "not[" => CdFilter::Not,
@@ -21,7 +22,6 @@ fn compile(args: impl Iterator<Item = String>) -> Vec<CdFilter> {
         "]" => CdFilter::Close,
         _ => CdFilter::Raw(arg),
     })
-    .collect()
 }
 
 fn next(args: &mut impl Iterator<Item = CdFilter>) -> Result<Filter, FilteError> {
@@ -47,7 +47,12 @@ fn csin(
         CdFilter::Close => Err(FilteError::MissingCommand)?,
         CdFilter::Raw(r) => raw(r),
     }?;
-    Ok(cnv(Box::new(out)))
+    let closer = args.next().ok_or(FilteError::MissingClose)?;
+    if let CdFilter::Close = closer {
+        Ok(cnv(Box::new(out)))
+    } else {
+        Err(FilteError::TooManyFilters)
+    }
 }
 
 fn cvec(
