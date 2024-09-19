@@ -3,6 +3,7 @@ use crate::*;
 enum CdFilter {
     And,
     Or,
+    Not,
     Close,
     Raw(String),
 }
@@ -15,6 +16,7 @@ pub fn parse(args: impl Iterator<Item = String>) -> Result<Filter, FilteError> {
 fn compile(args: impl Iterator<Item = String>) -> Vec<CdFilter> {
     args.map(|arg| match arg.as_ref() {
         "and[" => CdFilter::And,
+        "not[" => CdFilter::Not,
         "or[" => CdFilter::Or,
         "]" => CdFilter::Close,
         _ => CdFilter::Raw(arg),
@@ -25,11 +27,27 @@ fn compile(args: impl Iterator<Item = String>) -> Vec<CdFilter> {
 fn next(args: &mut impl Iterator<Item = CdFilter>) -> Result<Filter, FilteError> {
     let arg = args.next().ok_or(FilteError::MissingCommand)?;
     match arg {
+        CdFilter::Not => csin(args, Filter::Not),
         CdFilter::And => cvec(args, Filter::And),
         CdFilter::Or => cvec(args, Filter::Or),
         CdFilter::Close => Err(FilteError::NeedlessClose),
         CdFilter::Raw(s) => raw(s),
     }
+}
+
+fn csin(
+    args: &mut impl Iterator<Item = CdFilter>,
+    cnv: fn(Box<Filter>) -> Filter,
+) -> Result<Filter, FilteError> {
+    let arg = args.next().ok_or(FilteError::MissingClose)?;
+    let out = match arg {
+        CdFilter::Not => csin(args, Filter::Not),
+        CdFilter::And => cvec(args, Filter::And),
+        CdFilter::Or => cvec(args, Filter::Or),
+        CdFilter::Close => Err(FilteError::MissingCommand)?,
+        CdFilter::Raw(r) => raw(r),
+    }?;
+    Ok(cnv(Box::new(out)))
 }
 
 fn cvec(
@@ -40,6 +58,7 @@ fn cvec(
     loop {
         let arg = args.next().ok_or(FilteError::MissingClose)?;
         out.push(match arg {
+            CdFilter::Not => csin(args, Filter::Not),
             CdFilter::And => cvec(args, Filter::And),
             CdFilter::Or => cvec(args, Filter::Or),
             CdFilter::Close => break,

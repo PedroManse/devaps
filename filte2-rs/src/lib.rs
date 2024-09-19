@@ -43,6 +43,7 @@ pub enum Filter {
     Raw(RawFilter),
     And(Vec<Filter>),
     Or(Vec<Filter>),
+    Not(Box<Filter>),
 }
 
 impl Filter {
@@ -51,6 +52,7 @@ impl Filter {
             Filter::Raw(r) => r.compare(text),
             Filter::Or(rs) => rs.iter().any(|r| r.compare(text)),
             Filter::And(rs) => rs.iter().all(|r| r.compare(text)),
+            Filter::Not(r) => !r.compare(text),
         }
     }
 }

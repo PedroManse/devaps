@@ -17,7 +17,7 @@ $|z : ends with $pattern
 .|r : matches regex $pattern
 ?|g : matches glob $pattern
 
-filters can be grouped with and[ ... ] & or[ ... ] to execute multiple filters at once
+filters can be grouped with and[ ... ], or[ ... ] or not[ ... ] to execute multiple filters at once with logical joinings in them
 
 the only way to print this text is to execute with no arguments
 ";
