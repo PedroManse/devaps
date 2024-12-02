@@ -86,7 +86,18 @@ pub fn get_config() -> Result<Vec<Edit>, &'static str> {
     let filename = std::env::var("FPWDRS_CONFIG").or(Ok(home.clone()+"/.config/fpwd.lsp"))?;
     let file = std::fs::read_to_string(filename);
     match file {
-        Ok(content) => serde_lexpr::from_str(&content).or(Err("Parse error in ~/.config/fpwd.lsp")),
+        Ok(content) => {
+            match serde_lexpr::from_str::<Vec<Edit>>(&content) {
+                Err(x)=>{
+                    eprintln!("{x:?}");
+                    Err("Parse error in ~/.config/fpwd.lsp")
+                },
+                Ok(c)=>{
+                    Ok(c)
+                }
+            }
+            
+        }
         Err(_) => {
             let tilde = "~".to_owned();
             let color = "\\e[0m".to_owned();
