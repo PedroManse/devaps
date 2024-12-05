@@ -4,79 +4,48 @@ use serde::Deserialize;
 pub struct Edit {
     from: String,
     to: String,
-    color: Option<String>,
+    replace_n: Option<usize>,
 }
 
 #[derive(Debug)]
 pub struct Dir {
     path: String,
-    color: Option<String>,
 }
 
 #[derive(Debug)]
-pub struct BDir<'b> {
+pub struct BDir {
     path: String,
-    color: Option<&'b str>,
 }
 
-impl<'b> BDir<'b> {
+impl BDir {
     pub fn into_string(self) -> String {
-        if let Some(color) = self.color {
-            color.to_owned() + &self.path
-        } else {
-            self.path
-        }.replace("\\e", "\x1b")
+        self.path
     }
-    pub fn new(path: String) -> BDir<'b> {
-        BDir {
-            path, color: None,
-        }
+    pub fn new(path: String) -> BDir {
+        BDir { path }
     }
-    pub fn edit(self, cfg: &'b Edit) -> BDir<'b> {
-        if let Some(path) = self.path.strip_prefix(&cfg.from) {
-            let color: Option<&str> = match &cfg.color {
-                Some(col)=>Some(col.as_ref()),
-                None=>self.color,
-            };
-            BDir {
-                path: (cfg.to.clone() + path),
-                color,
-            }
-        } else {
-            self
+    pub fn edit(self, cfg: &Edit) -> BDir {
+        BDir{
+            path: self.path.replacen(&cfg.from, &cfg.to, cfg.replace_n.unwrap_or(999))
         }
     }
 }
 
 impl Dir {
     pub fn into_string(self) -> String {
-        if let Some(color) = self.color {
-            color + &self.path
-        } else {
-            self.path
-        }.replace("\\e", "\x1b")
+        self.path.replace("\\e", "\x1b")
     }
     pub fn new(path: String) -> Dir {
-        Dir { path, color: None }
+        Dir { path }
     }
     pub fn edit(self, cfg: Edit) -> Dir {
-        if let Some(path) = self.path.strip_prefix(&cfg.from) {
-            Dir {
-                path: cfg.to + path,
-                color: cfg.color.or(self.color),
-            }
-        } else {
-            self
+        Dir{
+            path: self.path.replacen(&cfg.from, &cfg.to, cfg.replace_n.unwrap_or(999))
         }
     }
     pub fn borrow_edit(self, cfg: &Edit) -> Dir {
-        if let Some(path) = self.path.strip_prefix(&cfg.from) {
-            Dir {
-                path: cfg.to.clone() + path,
-                color: cfg.color.clone().or(self.color),
-            }
-        } else {
-            self
+        Dir{
+            path: self.path.replacen(&cfg.from, &cfg.to, cfg.replace_n.unwrap_or(999))
         }
     }
 }
@@ -96,15 +65,13 @@ pub fn get_config() -> Result<Vec<Edit>, &'static str> {
                     Ok(c)
                 }
             }
-            
         }
         Err(_) => {
             let tilde = "~".to_owned();
-            let color = "\\e[0m".to_owned();
             Ok(vec![Edit {
                 from: home,
                 to: tilde,
-                color: Some(color),
+                replace_n: None,
             }])
         }
     }
