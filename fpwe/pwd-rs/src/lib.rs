@@ -7,46 +7,21 @@ pub struct Edit {
     replace_n: Option<usize>,
 }
 
+#[repr(transparent)]
 #[derive(Debug)]
-pub struct Dir {
-    path: String,
-}
-
-#[derive(Debug)]
-pub struct BDir {
-    path: String,
-}
+pub struct BDir ( String );
 
 impl BDir {
     pub fn into_string(self) -> String {
-        self.path
+        self.0.replace("\\e", "\x1b")
     }
     pub fn new(path: String) -> BDir {
-        BDir { path }
+        BDir( path )
     }
     pub fn edit(self, cfg: &Edit) -> BDir {
-        BDir{
-            path: self.path.replacen(&cfg.from, &cfg.to, cfg.replace_n.unwrap_or(999))
-        }
-    }
-}
-
-impl Dir {
-    pub fn into_string(self) -> String {
-        self.path.replace("\\e", "\x1b")
-    }
-    pub fn new(path: String) -> Dir {
-        Dir { path }
-    }
-    pub fn edit(self, cfg: Edit) -> Dir {
-        Dir{
-            path: self.path.replacen(&cfg.from, &cfg.to, cfg.replace_n.unwrap_or(999))
-        }
-    }
-    pub fn borrow_edit(self, cfg: &Edit) -> Dir {
-        Dir{
-            path: self.path.replacen(&cfg.from, &cfg.to, cfg.replace_n.unwrap_or(999))
-        }
+        BDir(
+            self.0.replacen(&cfg.from, &cfg.to, cfg.replace_n.unwrap_or(999))
+        )
     }
 }
 
