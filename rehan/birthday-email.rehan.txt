@@ -1,0 +1,16 @@
+#input name [UpperCaseFirst()]
+#input lastname [UpperCaseFirst()]
+#input age [IsInt() IsGreaterThan(-1)]
+#format full_name ${name} ${fullname}
+#set FULLNAME full_name [AllUpperCase()]
+#filename birthday-email-${name} ${lastname}-${age}.txt
+#comment rehan birthday-email.rehan.txt Pedro Manse 19
+#comment rehan birthday-email.rehan.txt "name:Pedro" "lastname:Manse" "age:19"
+#done
+
+Hello ${name}!
+
+Congrats on your ${age}th birthday!
+
+- From me
+- To ${fullname}

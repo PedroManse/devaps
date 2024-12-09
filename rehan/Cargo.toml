@@ -1,0 +1,9 @@
+[package]
+name = "rehan"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+regex = "1.11.1"
+strfmt = "0.2.4"
+thiserror = "2.0.6"
