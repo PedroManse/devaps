@@ -30,8 +30,13 @@ pub enum Error {
     UnkownDirective(String),
     #[error("Directive {0} needs more arguments")]
     DirectiveMissingArgs(String),
+    #[error("Transformer {0} was wrong argument count")]
+    TransformWrongArgsCount(String),
+    #[error("Unkown Transformer {0}")]
+    UnkownTransform(String),
 }
 
+#[derive(Debug)]
 pub enum Transform {
     UpperCaseFirst,
     AllUpperCase,
@@ -43,6 +48,7 @@ pub enum Transform {
     IsNumberInRange(f64, f64),
 }
 
+#[derive(Debug)]
 pub enum Directive {
     Filename {
         expr: String,
@@ -63,6 +69,7 @@ pub enum Directive {
 }
 
 // parse .rehen. file into RawDoc
+#[derive(Debug)]
 pub struct RawDocument {
     pub file_name: PathBuf,
     // directives defines for document
@@ -72,6 +79,7 @@ pub struct RawDocument {
 }
 
 // directives modify runtime doc content
+#[derive(Debug)]
 pub struct RuntimeDoc {
     pub file_name: PathBuf,
     pub vars: Vars,
@@ -79,6 +87,7 @@ pub struct RuntimeDoc {
 }
 
 // document is built after all directives are executed
+#[derive(Debug)]
 pub struct Document {
     pub file_name: PathBuf,
     pub content: String,

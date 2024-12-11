@@ -1,17 +1,47 @@
 use crate::*;
 
 fn parse_transforms(line: &str) -> Result<Vec<Transform>, Error> {
-    let transforms: Vec<(&str, Vec<&str>)> = line
-        .split(&[')', '[', ']'])
-        .map(|s|s.trim())
+    use Error::*;
+    use Transform::*;
+    line.split(&[')', '[', ']'])
+        .map(str::trim)
         .filter(|s| !s.is_empty())
-        .map(|s| s.split("(").filter(|s| !s.is_empty()).collect::<Vec<_>>())
-        .map(|s| (s[0], s[1..].to_vec()))
-        .collect();
-    for (transform, args) in transforms {
-        println!("{transform} {args:?}");
-    }
-    todo!()
+        .map(|s| s.split_once("(").unwrap_or((s, "")))
+        .map(|(t, args)| {
+            let split_args: Vec<_> = args
+                .split(",")
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .collect();
+            (t, split_args)
+        })
+        .map(|(transform, args)| {
+            Ok(match (transform, &args[..]) {
+                ("UpperCaseFirst", []) => UpperCaseFirst,
+                ("AllUpperCase", []) => AllUpperCase,
+                ("AllLowerCase", []) => AllLowerCase,
+                ("IsInt", []) => IsInt,
+                ("IsNumber", []) => IsNumber,
+                ("IsSmallerThan", [max]) => {
+                    let max: f64 = max.parse()?;
+                    IsSmallerThan(max)
+                }
+                ("IsGreaterThan", [min]) => {
+                    let min: f64 = min.parse()?;
+                    IsGreaterThan(min)
+                }
+                ("IsNumberInRange", [min, max]) => {
+                    let min: f64 = min.parse()?;
+                    let max: f64 = max.parse()?;
+                    IsNumberInRange(min, max)
+                }
+                ("IsNumberInRange" | "IsSmallerThan" | "IsGreaterThan", _) => {
+                    return Err(TransformWrongArgsCount(transform.to_string()))
+                }
+                (_, _) => return Err(UnkownTransform(transform.to_string())),
+            })
+        })
+        .collect()
 }
 
 fn parse_directive(line: &str) -> Result<Option<Directive>, Error> {
@@ -88,5 +118,9 @@ pub fn parse(file_name: PathBuf) -> Result<RawDocument, Error> {
         content += line?;
     }
 
-    todo!()
+    Ok(RawDocument {
+        file_name,
+        directives,
+        actual_content: content,
+    })
 }
