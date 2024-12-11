@@ -1,5 +1,4 @@
 pub use std::collections::HashMap;
-pub use std::path::PathBuf;
 pub use strfmt::strfmt;
 pub type Vars = HashMap<String, String>;
 pub mod build;
@@ -34,6 +33,8 @@ pub enum Error {
     TransformWrongArgsCount(String),
     #[error("Unkown Transformer {0}")]
     UnkownTransform(String),
+    #[error("Missing file argument")]
+    MissingFile,
 }
 
 #[derive(Debug)]
@@ -71,7 +72,7 @@ pub enum Directive {
 // parse .rehen. file into RawDoc
 #[derive(Debug)]
 pub struct RawDocument {
-    pub file_name: PathBuf,
+    pub file_name: String,
     // directives defines for document
     pub directives: Vec<Directive>,
     // content before rehan processing
@@ -81,7 +82,7 @@ pub struct RawDocument {
 // directives modify runtime doc content
 #[derive(Debug)]
 pub struct RuntimeDoc {
-    pub file_name: PathBuf,
+    pub file_name: String,
     pub vars: Vars,
     input_ns: usize,
 }
@@ -89,7 +90,7 @@ pub struct RuntimeDoc {
 // document is built after all directives are executed
 #[derive(Debug)]
 pub struct Document {
-    pub file_name: PathBuf,
+    pub file_name: String,
     pub content: String,
 }
 

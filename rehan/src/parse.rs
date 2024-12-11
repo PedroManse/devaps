@@ -100,7 +100,7 @@ fn parse_directive(line: &str) -> Result<Option<Directive>, Error> {
     }))
 }
 
-pub fn parse(file_name: PathBuf) -> Result<RawDocument, Error> {
+pub fn parse_doc(file_name: String) -> Result<RawDocument, Error> {
     let mut reader = reader::BufReader::open(&file_name)?;
     let mut buffer = String::new();
     let mut content = String::new();
@@ -125,4 +125,16 @@ pub fn parse(file_name: PathBuf) -> Result<RawDocument, Error> {
         directives,
         actual_content: content,
     })
+}
+
+pub fn parse_args(args: impl Iterator<Item=String>) -> Result<Vars, Error> {
+    let mut vars = HashMap::new();
+    for (n, arg) in args.enumerate() {
+        if let Some((name, val)) = arg.split_once(":") {
+            vars.insert(name.to_string(), val.to_string());
+        } else {
+            vars.insert(n.to_string(), arg);
+        }
+    }
+    Ok(vars)
 }

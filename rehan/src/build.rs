@@ -48,7 +48,7 @@ impl Directive {
         use Directive::*;
         match self {
             Filename { expr } => {
-                doc.file_name = PathBuf::from(strfmt(&expr, &doc.vars)?);
+                doc.file_name = strfmt(&expr, &doc.vars)?;
             }
             Input { name, transforms } => {
                 let value = doc
@@ -87,7 +87,7 @@ impl RawDocument {
         let directives = self.directives;
         let original_content = self.actual_content;
         let mut doc = RuntimeDoc {
-            input_ns: 1,
+            input_ns: 0,
             file_name: self.file_name,
             vars: inputs,
         };
