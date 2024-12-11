@@ -1,6 +1,11 @@
 use rehan::*;
 
-fn main() {
+fn main() -> Result<(), Error> {
+    parse::parse(PathBuf::from("./birthday-email.rehan.txt"))?;
+    Ok(())
+}
+
+fn _main() {
     let x = RawDocument{
         file_name: std::path::PathBuf::from("birthday-email.rehan.txt"),
         directives: vec![

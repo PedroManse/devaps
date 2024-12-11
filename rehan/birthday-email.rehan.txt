@@ -1,4 +1,4 @@
-#input name [UpperCaseFirst()]
+#input name [UpperCaseFirst(1, 2, 3)]
 #input lastname [UpperCaseFirst()]
 #input age [IsInt() IsGreaterThan(-1)]
 #format full_name ${name} ${fullname}
