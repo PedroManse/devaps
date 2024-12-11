@@ -55,6 +55,8 @@ fn parse_directive(line: &str) -> Result<Option<Directive>, Error> {
 
     let directive_args = line.next();
     Ok(Some(match (directive_name, directive_args) {
+        // for shebang support
+        ("#!", _) => return Ok(None),
         ("#comment", _) => return Ok(None),
         ("#filename", Some(expr)) => Filename {
             expr: expr.to_string(),

@@ -1,3 +1,4 @@
+#! /home/manse/code/devaps/rehan/target/debug/rehan
 #input name [UpperCaseFirst()]
 #input lastname [UpperCaseFirst()]
 #input age [IsInt() IsGreaterThan(-1)]
