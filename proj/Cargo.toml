@@ -1,0 +1,10 @@
+[package]
+name = "proj"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nix = { version = "0.29.0", features = ["fs", "process"] }
+serde = { version = "1.0.217", features = ["derive"] }
+thiserror = "2.0.10"
+toml = "0.8.19"
