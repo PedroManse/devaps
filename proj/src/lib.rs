@@ -1,19 +1,5 @@
-use std::collections::hash_map::Entry;
 pub use std::collections::HashMap;
-use serde::de::{Deserialize, Deserializer};
 use std::ffi::CString;
-
-fn lowercase_map<'de, D>(deserializer: D) -> Result<HashMap<String, Project>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let mut low = HashMap::new();
-    let x: HashMap<String, Project> = Deserialize::deserialize(deserializer)?;
-    for (k, v) in x {
-        low.insert(k.to_lowercase(), v);
-    }
-    Ok(low)
-}
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -27,8 +13,6 @@ pub enum Error {
     IOError(#[from] std::io::Error),
     #[error(transparent)]
     NixErr(#[from] nix::errno::Errno),
-    //#[error(transparent)]
-    //TomlSerializeError(#[from] toml::ser::Error),
     #[error(transparent)]
     TomlDeserializeError(#[from] toml::de::Error),
 }
