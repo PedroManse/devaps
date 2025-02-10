@@ -1,5 +1,5 @@
 fn dtc(arg: String, digits: Vec<u32>, piped: bool) {
-	if piped {
+	if !piped {
 		print!("{arg}: ");
 	}
 	for digit in digits {
