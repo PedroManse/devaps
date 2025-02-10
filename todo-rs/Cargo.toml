@@ -1,0 +1,10 @@
+[package]
+name = "todo-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+directories = "6.0.0"
+glob = "0.3.2"
+regex = "1.11.1"
+thiserror = "2.0.11"
