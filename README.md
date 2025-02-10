@@ -1,26 +1,8 @@
 # Programs and stuff
 
-[ctc.rs](#CTC)<br>
-[filte2-rs](#filte)<br>
-[fpwe/fpwd](#fpwd)<br>
-[fpwe/gs2](#gs2)<br>
-[hottie.c](#hottie)<br>
-[lev.c](#lev)<br>
-[lsr](#lsr)<br>
-[proj](#proj)<br>
-[rehan](#rehan)<br>
-[rot](#rot)<br>
-[runner](#runner)<br>
-[size](#size)<br>
-[sonar.py](#sonar)<br>
-[temp.c](#temp)<br>
-[tester](#tester)<br>
-[timer.c](#timer)<br>
-[tmpl](#tmpl)<br>
-[todo-rs](#todo)<br>
-
 # CTC
-## Converts characters to unicode indicies and vice-versa
+Converts characters to unicode indicies and vice-versa<br>
+
 ```shell
 $ctc hello
 h: 104
@@ -37,7 +19,7 @@ $ctc 104 101 108 108 111
 111: o
 ```
 
-## With "-1" as the first argument, you can make the output better for piping
+With "-1" as the first argument, you can make the output better for piping
 
 ```shell
 $ctc -1 104 101 108 108 111
@@ -56,11 +38,11 @@ $ctc -1 hello
 ```
 
 # Filte
-## Fiter input text with regex, glob and simple patterns
+Fiter input text with regex, glob and simple patterns<br>
 Include only the lines that match specified filters
 `[i](mode)(pattern)`
 
-### Modes (filter patterns)
+## Modes (filter patterns)
 
 mode        | symbol | char
 ------------|--------|-------
@@ -72,40 +54,40 @@ excludes    | `-`    | `e`
 regex       | `.`    | `r`
 glob        | `?`    | `g`
 
-### Invert
+## Invert
 You can prefix any mode with `i` to invert it's result (if the pattern matches, exclude the line)
 
-### Groups
+## Groups
 group[ filters... ]
 
-#### And
+### And
 `and[ ... ]`
 Only if all filters match, return a match
 group can shortcircuit
 
-#### Or
+### Or
 `or[ ... ]`
 If any filters match, return a match
 group can shortcircuit
 
-#### Not
+### Not
 `not[ . ]`
 Invert _the_ filter in group
 
 
-### Examples
-#### Remove all directories
+## Examples
+### Remove all directories
 Remove all directories from [lsr](github.com/pedromanse/devaps#lsr) output
 `lsr | filte i$/`
 
-#### List all files with a specific extensions
+### List all files with a specific extensions
 `lsr | filte or[ $.js $.ts ]`
 
 # Fpwd
-## Fancy print working directory (daemon / standalone)
+Fancy print working directory (daemon / standalone)<br>
 Rename and colour directories with a simple config file
 
-### config
+## config
 config file found in `$FPWDRS_CONFIG` or `$HOME/.config/fpwd.lsp`
 
 ```lisp
@@ -127,57 +109,54 @@ Any substring `\\e` will be replaced with `U+001B` to facilitate ANSI escape seq
 
 Without a config file, the only change that would happed in `$HOME` to `~`
 
-### fpwd-daemon
+## fpwd-daemon
 Tecnically not a daemon, since it doesn't fork
 
 Opens a socket in `/tmp/fpwd-rs.sock`, parses the config file and listens indefinatly
 Every line is parsed as a pwd output and printed after formatting is done
 
-### pwd-rs
+## pwd-rs
 Reads the config file, the PWD variable and formats it accordingly
 
 # Gs2
-## Report git repo status in a single line
-
+Report git repo status in a single line<br>
 ` {branch} {symbols}`
 
 The branch is displayed underlined and in purple, and the symbols are always displayed in this order
 
-symbol | meaning | color
-================
-Ü | clean (no other symbol to display)                       | green
-+ | untracked (new) file                                     | red
-→ | any tracked changes                                      | red
-x | merge conflict                                           | red
-- | untracked deleted files                                  | red
-← | untracked renamed file                                   | red
-* | untracked patches to files                               | red
-↕ | local and remote HEAD diverge (may need to push or pull) | inverted red, blinking
+symbol | meaning                                                  | color
+-------|----------------------------------------------------------|--------
+Ü      | clean (no other symbol to display)                       | green
++      | untracked (new) file                                     | red
+→      | any tracked changes                                      | red
+x      | merge conflict                                           | red
+-      | untracked deleted files                                  | red
+←      | untracked renamed file                                   | red
+*      | untracked patches to files                               | red
+↕      | local and remote HEAD diverge (may need to push or pull) | inverted red, blinking
 
 # Lsr
-## Recursively list files and directories, one by line
-
+Recursively list files and directories, one by line<br>
 Lists everything from the directories sent as arguments, otherwise list current directory
 
 Keeps all directories prefixes, even "./" when listing current dir
 
 # Proj
-## Instantiates a shell with several characteristics defined by a configuration file
-
+Instantiates a shell with several characteristics defined by a configuration file<br>
 With shell.nix, the only use for this is making global shortcuts for directories
 
 compiled binary as `p`
 
 ## Posix config
-name | config
-=============
+name        | config
+------------|-----------------------------------
 shell       | shell to be instantiated
 shell\_args | list of arguments to send to shell
 vars        | map of env variables to define
 dir         | directory to instantiate shell
 
 ## Nix config
-### Nix-specific features not developed yet, simply use the Posix config
+Nix-specific features not developed yet, simply use the Posix config
 
 ## Config file
 Loaded TOML file from `$PROJ_FILE`
@@ -199,12 +178,10 @@ vars = {
 ```
 
 # Hottie
-## Re-execute command on file update
-(it's shit)
+Re-execute command on file update (it's kinda shit rn, ngl)
 
 # Lev
-Get the levenshetein distance from multiple string to a target
-
+Get the levenshetein distance from multiple string to a target<br>
 The results are not sorted
 
 ```shell
@@ -216,49 +193,50 @@ $lev 123 122 133 3141
 ```
 
 # Rehan
-## Rust-based easy handlebars
-### Syntax
+Rust-based easy handlebars<br>
+
+## Syntax
 Files are split in two, the directives section and the document. All directives
 start with "#" and serve to acquire or modify information, and the last
 directive must be `#done`. After the last directive the document content
 starts, every `{}` pair will be replaed with the variable defined within and
 every `{{` is swapped with `{` and `}}` with `}`
 
-### Directives
+## Directives
 The [Filename](#filename), [Set](#set) and [Format](#format) directives may
 take experssions with `{}` that will be replaced by variables during formatting
 
-#### Filename
+### Filename
 Define the filename of the formatted document to be output
 
 > `{variables}` parsed
 
 `#filename {title}-{author}.tex`
 
-#### Input
+### Input
 Define a variable to be input when formatting the file and how to modify or fitler it
 
 `#input doc_id [IsInt()]`
 
-#### Format
+### Format
 Create a variable based on the expression provided
 
 `#format global_regex /{regex}/g`
 
 > `{variables}` parsed
 
-#### Set
+### Set
 Clone a variable and modify it with [transformers](#transformers)
 
 `#set name_upper name_lower [UpperCaseFirst()]`
 
-### Transformers
+## Transformers
 Modifiers are used in the #set directive to modify or filter strings. All
 transformers need () after their names, even if they don't require any
 arguments
 
-transformers | input | action
-=============================
+transformers    | input    | action
+----------------|----------|-----------------------
 UpperCaseFirst  |          | uppercase first letter
 AllUpperCase    |          | uppercase all letters
 AllLowerCase    |          | lowercase all letters
@@ -268,25 +246,25 @@ IsSmallerThan   | f64      | check if number is smaller than X
 IsGreaterThan   | f64      | check ir number is greater than X
 IsNumberInRange | f64, f64 | check if number is in range \[X, Y\] (inclusive)
 
-### Usage
+## Usage
 ```shell
 $rehan <file> [<variable_name>:<variable_value>...] [<variable_value>...]
 ```
 
 If variables are defined without names, they are sent in the order the input directives are defined
 
-### Rehan-prepare
+## Rehan-prepare
 
 Since, to make a rehan file, you'd need to duplicate all `{}` pairs,
 `rehan-prepare` does that, adds the `#done` directive at the begining of the
 file and saves the document to `{file}.rehan.{ext}`.
 
 # Rot
-## I don't remember
+I don't remember<br>
 Rot is a simpler `.dot` format parser that exports to `.dot` and other GraphViz supported formats
 
 # Runner
-## Start the current project
+Start the current project<br>
 Based on `$HOME/.config/runner.cfg` understand the current project and execute it
 
 The config file is split on scopes by double newlines. Each scope can have
@@ -312,7 +290,7 @@ exec=go run $found
 ```
 
 # Size
-## Measure the size of a directories or files
+Measure the size of a directories or files<br>
 ```shell
 $size .
 1314.45Mib
