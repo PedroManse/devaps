@@ -4,3 +4,21 @@ fpwd:
 
 ctc:
 	read stdin
+
+rehan:
+	capture env vars
+	capture date
+	usage text
+	--help <file.rehan>
+	rehan-prepare remove trailing '.' on files without extensions
+
+size:
+ specify unit
+ default to current directory
+
+todo:
+	global and local (closest config file, going up) config
+	project sophisticated enough to generate this file
+
+tmpl:
+	execute file directly
