@@ -62,15 +62,15 @@ Include only the lines that match specified filters
 
 ### Modes (filter patterns)
 
-mode | symbol | char
-====================
-equal       | `=` |
-starts with | `^` | `s`
-ends with   | `$` | `z`
-includes    | `+` | `h`
-excludes    | `-` | `e`
-regex       | `.` | `r`
-glob        | `?` | `g`
+mode        | symbol | char
+------------|--------|-------
+equal       | `=`    |
+starts with | `^`    | `s`
+ends with   | `$`    | `z`
+includes    | `+`    | `h`
+excludes    | `-`    | `e`
+regex       | `.`    | `r`
+glob        | `?`    | `g`
 
 ### Invert
 You can prefix any mode with `i` to invert it's result (if the pattern matches, exclude the line)
