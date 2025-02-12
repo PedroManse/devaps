@@ -87,7 +87,7 @@ Fancy print working directory (daemon / standalone)<br>
 Rename and colour directories with a simple config file
 
 ## config
-config file found in `$FPWDRS_CONFIG` or `$HOME/.config/fpwd.lsp`
+config file found in `$FPWDRS_CONFIG` or `$HOME/.config/fpwd.lsp`. Socket path defined by `$FPWDRS_SOCKET_NAME`.
 
 ```lisp
 (

@@ -1,7 +1,3 @@
-fpwd:
-	put socket in /run by default
-	$FPWDRS_SOCKET env var
-
 ctc:
 	read stdin
 
