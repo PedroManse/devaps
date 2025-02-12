@@ -3,16 +3,21 @@ use std::path::PathBuf;
 pub mod conf;
 pub mod filstu;
 
-const CONF_EXT: &'static str = "conf";
-const CONF_NAME: &'static str = "todo";
+const CONF_EXT: &'static str = "toml";
+const CONF_NAME: &'static str = "config";
+const LOCAL_CONF_NAME: &'static str = "todo";
 pub const CONF_LEAF: &'static str = const_format::formatcp!("{CONF_NAME}.{CONF_EXT}");
-pub const HIDDEN_CONF_LEAF: &'static str = const_format::formatcp!(".{CONF_LEAF}");
+pub const LOCAL_CONF_LEAF: &'static str = const_format::formatcp!(".{LOCAL_CONF_NAME}.{CONF_EXT}");
 
 
 #[derive(thiserror::Error, Debug)]
-enum Error {
+pub enum TDError {
     #[error(transparent)]
-    ConfigError(conf::ConfigError),
+    ConfigError(#[from] conf::ConfigError),
+    #[error(transparent)]
+    TomlDeError(#[from] toml::de::Error),
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
     #[error("")]
     ConfigNotFound,
 }
@@ -23,7 +28,7 @@ pub fn rev_find_config() -> Option<PathBuf> {
         let Some(next) = cwd.parent() else {
             break None
         };
-        let conf = cwd.clone().join(HIDDEN_CONF_LEAF);
+        let conf = cwd.clone().join(LOCAL_CONF_LEAF);
         if conf.exists() {
             break Some(conf)
         }

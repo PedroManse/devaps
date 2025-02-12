@@ -1,13 +1,14 @@
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::filstu::PathFilter;
 
 #[derive(Debug)]
-pub struct FilePath(PathBuf);
+pub struct FilePath(pub PathBuf);
 #[derive(Debug)]
-pub struct Patterns(Vec<Regex>);
+pub struct Patterns(pub Vec<Regex>);
 
 #[derive(thiserror::Error, Debug)]
 pub enum ConfigError {
@@ -47,6 +48,8 @@ pub struct Config {
     pub ignore_file_patterns: Patterns,
     pub search_dir_patterns: Patterns,
     pub ignore_dir_patterns: Patterns,
+    // file path regex, TODO comment regex
+    pub find_todos: Vec<(Regex, Regex)>,
     pub human_report: Option<FilePath>,
     pub json_report: Option<FilePath>,
 }
@@ -84,6 +87,7 @@ pub struct ConfigRaw {
     pub ignore_file_patterns: Vec<String>,
     pub search_dir_patterns: Vec<String>,
     pub ignore_dir_patterns: Vec<String>,
+    pub find_todos: HashMap<String, String>,
     pub human_report: Option<String>,
     pub json_report: Option<String>,
 }
@@ -91,9 +95,16 @@ pub struct ConfigRaw {
 impl TryFrom<ConfigRaw> for Config {
     type Error = ConfigError;
     fn try_from(value: ConfigRaw) -> Result<Self, Self::Error> {
+        let finds: Vec<(Regex, Regex)> = value.find_todos.into_iter().map(|(path, comnt)|{
+            Ok::<_, regex::Error>((
+                Regex::new(&path)?,
+                Regex::new(&comnt)?
+            ))
+        }).collect::<Result<_, _>>()?;
         Ok(Config {
             read_by_default: value.read_by_default,
             search_by_default: value.search_by_default,
+            find_todos: finds,
             read_file_patterns: value.read_file_patterns.try_into()?,
             ignore_file_patterns: value.ignore_file_patterns.try_into()?,
             search_dir_patterns: value.search_dir_patterns.try_into()?,

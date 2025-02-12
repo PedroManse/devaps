@@ -1,25 +1,21 @@
-use std::path::{Path, PathBuf};
+use std::fmt::Display;
 
-use regex::Regex;
 use todo_rs::*;
 
 use self::conf::{Config, ConfigRaw};
+use self::filstu::Node;
 
-fn main() {
-    //let config_file = rev_find_config().or(find_global_config());
-    //println!("{config_file:?}");
+fn main() -> Result<(), TDError> {
+    let config_path = rev_find_config().or(find_global_config()).ok_or(TDError::ConfigNotFound)?;
+    let config_text = std::fs::read_to_string(config_path)?;
+    let cfg: ConfigRaw = toml::from_str(&config_text)?;
+    let cfg: Config = cfg.try_into()?;
 
-    let cfg: Config = ConfigRaw{
-        read_by_default: false,
-        search_by_default: true,
-        read_file_patterns: vec![".*\\.rs".to_string()],
-        ignore_file_patterns: vec!["target/.+".to_string()],
-        search_dir_patterns: vec![],
-        ignore_dir_patterns: vec!["target/.+".to_string()],
-        human_report: None,
-        json_report: None,
-    }.try_into().unwrap();
-    println!("{cfg:?}");
-    let x = filstu::read_dir_fitered(PathBuf::from(".").as_path(), &cfg);
-    println!("{x:?}");
+    let x = filstu::read_dir_fitered(".", &cfg)?;
+    let z = x.map(|d, fs|d, |f|{
+        let name = f.0.file_name().unwrap().to_str().unwrap();
+        format!("{name} [0]")
+    });
+    println!("{z}");
+    Ok(())
 }
