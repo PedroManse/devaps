@@ -74,8 +74,7 @@ group can short-circuit
 `not[ . ]`
 Invert _the_ filter in group
 
-
-## Examples
+<h2><a name="filte-examples">Examples</a></h2>
 ### Remove all directories
 Remove all directories from [lsr](github.com/pedromanse/devaps#lsr) output
 `lsr | filte i$/`
