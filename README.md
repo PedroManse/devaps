@@ -62,13 +62,13 @@ group[ filters... ]
 
 ### And
 `and[ ... ]`
-Only if all filters match, return a match
-group can shortcircuit
+Only if all filters match, return a match<br>
+group can short-circuit
 
 ### Or
 `or[ ... ]`
-If any filters match, return a match
-group can shortcircuit
+If any filters match, return a match<br>
+group can short-circuit
 
 ### Not
 `not[ . ]`
