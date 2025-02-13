@@ -7,6 +7,7 @@ pub enum Node<A, H> {
     List(H, Vec<Node<A, H>>),
 }
 pub struct FPath(pub PathBuf);
+#[derive(Debug)]
 pub struct DPath(pub PathBuf);
 pub type Entry = Node<FPath, DPath>;
 
