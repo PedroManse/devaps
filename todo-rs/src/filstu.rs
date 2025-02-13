@@ -19,41 +19,36 @@ impl<Ai, Hi> Node<Ai, Hi> {
     {
         self.map_(&mut dir_cb, &mut file_cb)
     }
-    
+
     fn map_<Ao, Ho, Ff, Fd>(self, dir_cb: &mut Fd, file_cb: &mut Ff) -> Node<Ao, Ho>
     where
         Ff: FnMut(Ai) -> Ao,
         Fd: FnMut(Hi, &[Node<Ai, Hi>]) -> Ho,
     {
         match self {
-            Node::Atom(f)=>Node::Atom(file_cb(f)),
-            Node::List(f, fs)=>{
-                Node::List(
-                    dir_cb(f, &fs),
-                    fs.into_iter().map(|f|f.map_(dir_cb, file_cb)).collect()
-                )
-            },
+            Node::Atom(f) => Node::Atom(file_cb(f)),
+            Node::List(f, fs) => Node::List(
+                dir_cb(f, &fs),
+                fs.into_iter().map(|f| f.map_(dir_cb, file_cb)).collect(),
+            ),
         }
     }
 
     pub fn atom(&self) -> Option<&Ai> {
         match self {
-            Node::Atom(a)=>Some(a),
-            Node::List(..)=>None,
+            Node::Atom(a) => Some(a),
+            Node::List(..) => None,
         }
     }
     pub fn list(&self) -> Option<(&Hi, &[Self])> {
         match self {
-            Node::Atom(..)=>None,
-            Node::List(h, xs)=>Some((h, &xs)),
+            Node::Atom(..) => None,
+            Node::List(h, xs) => Some((h, &xs)),
         }
     }
 }
 
-pub fn read_dir_fitered<F, P>(
-    dir: P,
-    filter: &F,
-) -> Result<Entry, std::io::Error>
+pub fn read_dir_fitered<F, P>(dir: P, filter: &F) -> Result<Entry, std::io::Error>
 where
     F: PathFilter,
     P: AsRef<Path>,
@@ -63,18 +58,23 @@ where
         if filter.filter_dir(dir) {
             return Ok(Entry::Atom(FPath(dir.into())));
         } else {
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, "Can't read_dir_fitered a file"));
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Can't read_dir_fitered a file",
+            ));
         }
     }
     let out: Result<Vec<_>, _> = fs::read_dir(dir)?
-        .filter(|f|{
-            f.as_ref().map(|x|{
-                let path = x.path();
-                match path.is_dir() {
-                    true=>filter.filter_dir(path.as_path()),
-                    false=>filter.filter_file(path.as_path()),
-                }
-            }).unwrap_or(false)
+        .filter(|f| {
+            f.as_ref()
+                .map(|x| {
+                    let path = x.path();
+                    match path.is_dir() {
+                        true => filter.filter_dir(path.as_path()),
+                        false => filter.filter_file(path.as_path()),
+                    }
+                })
+                .unwrap_or(false)
         })
         .map(|f| read_dir_fitered(&f?.path(), filter))
         .collect();
@@ -97,7 +97,7 @@ mod display {
     }
     impl Display for DPath {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let name = self.0.file_name().and_then(|f|f.to_str()).unwrap_or(".");
+            let name = self.0.file_name().and_then(|f| f.to_str()).unwrap_or(".");
             f.write_str(name)
         }
     }
@@ -107,11 +107,6 @@ mod display {
             display_entry(f, self, "", "")
         }
     }
-    //impl fmt::Display for Entry {
-    //    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    //        display_entry(f, self, "", "")
-    //    }
-    //}
 
     fn display_entry<Na, Nb>(
         f: &mut fmt::Formatter<'_>,
@@ -119,9 +114,10 @@ mod display {
         pad: &str,
         segment: &str,
     ) -> Result<(), fmt::Error>
-        where Node<Na, Nb>: Display,
-            Na: Display,
-            Nb: Display
+    where
+        Node<Na, Nb>: Display,
+        Na: Display,
+        Nb: Display,
     {
         f.write_str(pad)?;
         match e {

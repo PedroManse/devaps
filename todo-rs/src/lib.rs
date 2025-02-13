@@ -51,7 +51,10 @@ impl crate::filstu::FPath {
             .fold(0, |i, f| i + f.find_iter(&cont).count()))
     }
 
-    pub fn report_todos(&self, cfg: &crate::conf::Config) -> Result<HashMap<usize, String>, TDError> {
+    pub fn report_todos(
+        &self,
+        cfg: &crate::conf::Config,
+    ) -> Result<HashMap<usize, String>, TDError> {
         let finders = cfg.get_todo_finders(self.0.as_path());
         let cont = std::fs::read_to_string(&self.0)?;
         let mut matches = HashMap::new();
