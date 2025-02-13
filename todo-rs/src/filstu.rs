@@ -1,13 +1,17 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
 pub enum Node<A, H> {
     Atom(A),
     List(H, Vec<Node<A, H>>),
 }
+#[derive(Debug, Clone, Serialize)]
 pub struct FPath(pub PathBuf);
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DPath(pub PathBuf);
 pub type Entry = Node<FPath, DPath>;
 
@@ -17,10 +21,18 @@ impl<Ai, Hi> Node<Ai, Hi> {
         Ff: FnMut(Ai) -> Ao,
         Fd: FnMut(Hi, &[Node<Ai, Hi>]) -> Ho,
     {
-        self.map_(&mut dir_cb, &mut file_cb)
+        self._map(&mut dir_cb, &mut file_cb)
     }
 
-    fn map_<Ao, Ho, Ff, Fd>(self, dir_cb: &mut Fd, file_cb: &mut Ff) -> Node<Ao, Ho>
+    pub fn map_ref<Ao, Ho, Ff, Fd>(&self, mut dir_cb: Fd, mut file_cb: Ff) -> Node<Ao, Ho>
+    where
+        Ff: FnMut(&Ai) -> Ao,
+        Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> Ho,
+    {
+        self._map_ref(&mut dir_cb, &mut file_cb)
+    }
+
+    fn _map<Ao, Ho, Ff, Fd>(self, dir_cb: &mut Fd, file_cb: &mut Ff) -> Node<Ao, Ho>
     where
         Ff: FnMut(Ai) -> Ao,
         Fd: FnMut(Hi, &[Node<Ai, Hi>]) -> Ho,
@@ -29,7 +41,43 @@ impl<Ai, Hi> Node<Ai, Hi> {
             Node::Atom(f) => Node::Atom(file_cb(f)),
             Node::List(f, fs) => Node::List(
                 dir_cb(f, &fs),
-                fs.into_iter().map(|f| f.map_(dir_cb, file_cb)).collect(),
+                fs.into_iter().map(|f| f._map(dir_cb, file_cb)).collect(),
+            ),
+        }
+    }
+
+    fn _map_ref<Ao, Ho, Ff, Fd>(&self, dir_cb: &mut Fd, file_cb: &mut Ff) -> Node<Ao, Ho>
+    where
+        Ff: FnMut(&Ai) -> Ao,
+        Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> Ho,
+    {
+        match self {
+            Node::Atom(f) => Node::Atom(file_cb(&f)),
+            Node::List(f, fs) => Node::List(
+                dir_cb(&f, &fs),
+                fs.into_iter().map(|f| f._map_ref(dir_cb, file_cb)).collect(),
+            ),
+        }
+    }
+
+    pub fn cmap_ref<'a, 'h, Ao, Ho, Ff, Fd>(&self, mut dir_cb: Fd, mut file_cb: Ff) -> Node<&'a Ao, &'h Ho>
+    where
+        Ff: FnMut(&Ai) -> &'a Ao,
+        Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> &'h Ho,
+    {
+        self._cmap_ref(&mut dir_cb, &mut file_cb)
+    }
+
+    pub fn _cmap_ref<'a, 'h, Ao, Ho, Ff, Fd>(&self, dir_cb: &mut Fd, file_cb: &mut Ff) -> Node<&'a Ao, &'h Ho>
+    where
+        Ff: FnMut(&Ai) -> &'a Ao,
+        Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> &'h Ho,
+    {
+        match self {
+            Node::Atom(f) => Node::Atom(file_cb(&f)),
+            Node::List(f, fs) => Node::List(
+                dir_cb(&f, &fs),
+                fs.into_iter().map(|f| f._cmap_ref(dir_cb, file_cb)).collect(),
             ),
         }
     }
@@ -45,6 +93,13 @@ impl<Ai, Hi> Node<Ai, Hi> {
             Node::Atom(..) => None,
             Node::List(h, xs) => Some((h, &xs)),
         }
+    }
+    pub fn into_atoms(self) -> Vec<Ai> {
+        let mut out = vec![];
+        self.map(|_, _|(), |a|{
+            out.push(a);
+        });
+        out
     }
 }
 

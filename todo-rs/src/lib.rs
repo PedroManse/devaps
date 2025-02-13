@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 pub mod conf;
 pub mod filstu;
+pub mod out;
 
 const CONF_EXT: &'static str = "toml";
 const CONF_NAME: &'static str = "config";
