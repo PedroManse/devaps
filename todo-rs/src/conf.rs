@@ -1,7 +1,7 @@
 use regex::Regex;
-use serde::{Deserialize};
+use serde::Deserialize;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::filstu::PathFilter;
 
@@ -48,33 +48,49 @@ pub struct Config {
     pub ignore_file_patterns: Patterns,
     pub search_dir_patterns: Patterns,
     pub ignore_dir_patterns: Patterns,
-    // file path regex, TODO comment regex
+    //TODO: find by ext (faster)
     pub find_todos: Vec<(Regex, Regex)>,
     pub human_report: Option<FilePath>,
     pub json_report: Option<FilePath>,
 }
 
+impl Config {
+    pub fn get_todo_finders<'a, 'p>(&'a self, path: &'p Path) -> Vec<&'a Regex> {
+        let path = path
+            .to_str()
+            .map(String::from)
+            .unwrap_or(path.to_string_lossy().into_owned());
+        let mut finders = vec![];
+        for (check_path, finder) in &self.find_todos {
+            if check_path.is_match(&path) {
+                finders.push(finder);
+            }
+        }
+        finders
+    }
+}
+
 impl PathFilter for Config {
-    fn filter_dir(&self, path: &std::path::Path) -> bool {
+    fn filter_dir(&self, path: &Path) -> bool {
         let exclude = path
-                    .to_str()
-                    .map(|path| self.ignore_dir_patterns.matches_any(path))
-                    .unwrap_or(false);
-        let include  = path
-                .to_str()
-                .map(|path| self.search_dir_patterns.matches_any(path))
-                .unwrap_or(false);
+            .to_str()
+            .map(|path| self.ignore_dir_patterns.matches_any(path))
+            .unwrap_or(false);
+        let include = path
+            .to_str()
+            .map(|path| self.search_dir_patterns.matches_any(path))
+            .unwrap_or(false);
         (self.search_by_default || include) && !exclude
     }
     fn filter_file(&self, path: &std::path::Path) -> bool {
         let exclude = path
-                    .to_str()
-                    .map(|path| self.ignore_file_patterns.matches_any(path))
-                    .unwrap_or(false);
-        let include  = path
-                .to_str()
-                .map(|path| self.read_file_patterns.matches_any(path))
-                .unwrap_or(false);
+            .to_str()
+            .map(|path| self.ignore_file_patterns.matches_any(path))
+            .unwrap_or(false);
+        let include = path
+            .to_str()
+            .map(|path| self.read_file_patterns.matches_any(path))
+            .unwrap_or(false);
         (self.read_by_default || include) && !exclude
     }
 }
@@ -95,12 +111,11 @@ pub struct ConfigRaw {
 impl TryFrom<ConfigRaw> for Config {
     type Error = ConfigError;
     fn try_from(value: ConfigRaw) -> Result<Self, Self::Error> {
-        let finds: Vec<(Regex, Regex)> = value.find_todos.into_iter().map(|(path, comnt)|{
-            Ok::<_, regex::Error>((
-                Regex::new(&path)?,
-                Regex::new(&comnt)?
-            ))
-        }).collect::<Result<_, _>>()?;
+        let finds: Vec<(Regex, Regex)> = value
+            .find_todos
+            .into_iter()
+            .map(|(path, comnt)| Ok::<_, regex::Error>((Regex::new(&path)?, Regex::new(&comnt)?)))
+            .collect::<Result<_, _>>()?;
         Ok(Config {
             read_by_default: value.read_by_default,
             search_by_default: value.search_by_default,
