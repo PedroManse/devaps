@@ -1,3 +1,4 @@
+use std::fmt::{self, format, Display};
 use std::path::PathBuf;
 
 use self::conf::{Config, ConfigRaw};
@@ -36,15 +37,48 @@ struct FileTodos {
     todos: Vec<Todo>,
 }
 
-fn list_todos(flst: Node<FPath, DPath>, cfg: &Config) -> Node<Result<FileTodos, TDError>, DPath> {
+type Report = Node<Result<FileTodos, TDError>, DPath>;
+
+fn write_report(report: Report) -> String {
+    let mut c = String::new();
+    report.map(
+        |_, _| (),
+        |f| {
+            let Ok(f) = f else { panic!() };
+            if f.todos.is_empty() {
+                return ();
+            }
+
+            // skip first directory
+            let name = f
+                .from
+                .into_iter()
+                .skip(1)
+                .collect::<PathBuf>()
+                .display()
+                .to_string();
+            c.push_str(&name);
+            c.push('\n');
+            for t in f.todos {
+                c.push('\t');
+                c.push_str(&t.text);
+                //c.push('\n');
+            }
+            c.push('\n');
+            ()
+        },
+    );
+    c
+}
+
+fn list_todos(flst: Node<FPath, DPath>, cfg: &Config) -> Report {
     flst.map(
         |d, _| d,
         |f| {
-            let reports: Vec<Todo> = f.report_todos(&cfg)?
+            let reports: Vec<Todo> = f
+                .report_todos(&cfg)?
                 .into_iter()
-                .map(|(pos, text)|{
-                    Todo{pos, text}
-                })
+                .map(|(pos, text)| Todo { pos, text })
                 .collect();
             let todo_entry = FileTodos {
                 from: f.0,
@@ -64,9 +98,13 @@ fn main() -> Result<(), TDError> {
     let cfg: Config = cfg.try_into()?;
 
     let flst = filstu::read_dir_fitered(".", &cfg)?;
+    //println!("{flst}");
     //let todos_display = show_todos(flst, &cfg);
     //println!("{todos_display}");
+
     let todos_report = list_todos(flst, &cfg);
-    println!("{todos_report:?}");
+    //println!("{todos_report:?}");
+    let x = write_report(todos_report);
+    print!("{x}");
     Ok(())
 }
