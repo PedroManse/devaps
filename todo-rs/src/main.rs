@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+use std::path::PathBuf;
+
 use todo_rs::*;
 use conf::{Config, ConfigRaw};
 
-use self::out::{JSONReport, TextReport};
+use self::out::{JSONReport, JsonR, Report, TextReport, D};
 
 fn main() -> Result<(), TDError> {
     let config_path = rev_find_config()
@@ -16,8 +19,15 @@ fn main() -> Result<(), TDError> {
     //let todos_display = show_todos(flst, &cfg);
     //println!("{todos_display}");
 
-    let json_todos_report: JSONReport = out::make_report(flst.clone(), &cfg);
+    let json_todos_report: Report = out::make_report(flst.clone(), &cfg);
     //println!("{todos_report:?}");
-    print!("{}",  serde_json::to_string(&json_todos_report).unwrap());
+    let jout = match json_todos_report.0 {
+        filstu::Node::List(_, xs) => {
+            out::json::filstu_to_jsonr(xs)?
+        },
+        _=>panic!()
+    };
+    print!("{}",  serde_json::to_string(&jout).unwrap());
+
     Ok(())
 }
