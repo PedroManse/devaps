@@ -1,49 +1,42 @@
 use crate::conf::Config;
 use crate::filstu::{DPath, FPath, Node};
 use crate::TDError;
-use colored::Colorize;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fmt::{self, Write};
+use colored::Colorize;
 
 #[derive(Debug, Serialize, Hash, PartialEq, Eq, Clone)]
-pub struct Todo {
-    pub pos: usize,
-    pub text: String,
+struct Todo {
+    pos: usize,
+    text: String,
 }
 
 #[derive(Debug, Serialize)]
-pub struct FileTodos {
-    pub from: PathBuf,
-    pub todos: Vec<Todo>,
+struct FileTodos {
+    from: PathBuf,
+    todos: Vec<Todo>,
 }
 
-pub struct Report(pub Node<Result<FileTodos, TDError>, DPath>);
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum DMid {
-    FileMid(Vec<Todo>, PathBuf),
-    File(Vec<Todo>),
-    Dir(JsonR),
-}
-
-#[derive(Debug, Serialize, PartialEq, Eq, Clone)]
-#[serde(untagged)]
-pub enum D{
-    File(Vec<Todo>),
-    Dir(JsonR),
-}
-#[derive(Debug, Serialize, PartialEq, Eq, Clone)]
-pub struct JsonR(pub HashMap<PathBuf, D>);
+pub struct Report(Node<Result<FileTodos, TDError>, DPath>);
 
 #[derive(Serialize)]
-pub struct JSONReport(JsonR);
+pub struct JSONReport(json::JsonR);
 pub struct TextReport(Node<Result<FileTodos, TDError>, DPath>);
-type Nd = Node<Result<FileTodos, TDError>, DPath>;
 
-pub mod json {
+mod json {
     use super::*;
+    type Nd = Node<Result<FileTodos, TDError>, DPath>;
+    #[derive(Debug, Serialize, PartialEq, Eq, Clone)]
+    #[serde(untagged)]
+    enum D{
+        File(Vec<Todo>),
+        Dir(JsonR),
+    }
+    #[derive(Debug, Serialize, PartialEq, Eq, Clone)]
+    pub(super) struct JsonR(HashMap<PathBuf, D>);
+
     fn node_update_parent(node: Nd, parent: &mut HashMap<PathBuf, D>) -> Result<(), TDError> {
         match node {
             Node::Atom(f) => {
@@ -58,7 +51,7 @@ pub mod json {
         Ok(())
     }
 
-    pub fn filstu_to_jsonr(xs: Vec<Nd>) -> Result<JsonR, TDError> {
+    pub(super) fn filstu_to_jsonr(xs: Vec<Nd>) -> Result<JsonR, TDError> {
         let mut r: HashMap<PathBuf, D> = HashMap::new();
         for x in xs.into_iter() {
             node_update_parent(x, &mut r)?;
@@ -122,19 +115,44 @@ impl fmt::Display for TextReport {
     }
 }
 
-impl From<Report> for TextReport {
-    fn from(value: Report) -> Self {
-        TextReport(value.0)
+impl IntoReport<TextReport> for Report {
+    type Error = TDError;
+    fn into_report(self: Report, _: &Config) -> Result<TextReport, Self::Error> {
+        Ok(TextReport(self.0))
     }
 }
 
-impl From<Report> for JSONReport {
-    fn from(value: Report) -> Self {
-        todo!()
+impl IntoReport<JSONReport> for Report {
+    type Error = TDError;
+    fn into_report(self: Report, _: &Config) -> Result<JSONReport, Self::Error> {
+        match self.0 {
+            Node::List(_, xs) => {
+                json::filstu_to_jsonr(xs).map(JSONReport)
+            },
+            _=>{
+                Err(TDError::TriedJSONReportFromFile)
+            }
+        }
     }
 }
 
-pub fn make_report<R: From<Report>>(flst: Node<FPath, DPath>, cfg: &Config) -> R {
+impl<RF> IntoReport<RF> for Report
+where RF: From<Report>
+{
+    type Error = ();
+    fn into_report(self, cfg: &Config) -> Result<RF, Self::Error> {
+        Ok(self.into())
+    }
+}
+
+pub trait IntoReport<R> {
+    type Error;
+    fn into_report(self, cfg: &Config) -> Result<R, Self::Error>;
+}
+
+pub fn make_report<R>(flst: Node<FPath, DPath>, cfg: &Config) -> Result<R, <Report as IntoReport<R>>::Error>
+where Report: IntoReport<R>
+{
     Report(flst.map(
         |d, _| d,
         |f| {
@@ -149,5 +167,6 @@ pub fn make_report<R: From<Report>>(flst: Node<FPath, DPath>, cfg: &Config) -> R
             };
             Ok(todo_entry)
         },
-    )).into()
+    )).into_report(cfg)
 }
+
