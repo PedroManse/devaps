@@ -16,68 +16,46 @@ pub struct DPath(pub PathBuf);
 pub type Entry = Node<FPath, DPath>;
 
 impl<Ai, Hi> Node<Ai, Hi> {
-    pub fn map<Ao, Ho, Ff, Fd>(self, mut dir_cb: Fd, mut file_cb: Ff) -> Node<Ao, Ho>
+    pub fn map<Ao, Ho, Ff, Fd>(self, mut dir_fn: Fd, mut file_fn: Ff) -> Node<Ao, Ho>
     where
         Ff: FnMut(Ai) -> Ao,
         Fd: FnMut(Hi, &[Node<Ai, Hi>]) -> Ho,
     {
-        self._map(&mut dir_cb, &mut file_cb)
+        self._map(&mut dir_fn, &mut file_fn)
     }
 
-    pub fn map_ref<Ao, Ho, Ff, Fd>(&self, mut dir_cb: Fd, mut file_cb: Ff) -> Node<Ao, Ho>
+    pub fn map_ref<Ao, Ho, Ff, Fd>(&self, mut dir_fn: Fd, mut file_fn: Ff) -> Node<Ao, Ho>
     where
         Ff: FnMut(&Ai) -> Ao,
         Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> Ho,
     {
-        self._map_ref(&mut dir_cb, &mut file_cb)
+        self._map_ref(&mut dir_fn, &mut file_fn)
     }
 
-    fn _map<Ao, Ho, Ff, Fd>(self, dir_cb: &mut Fd, file_cb: &mut Ff) -> Node<Ao, Ho>
+    fn _map<Ao, Ho, Ff, Fd>(self, dir_fn: &mut Fd, file_fn: &mut Ff) -> Node<Ao, Ho>
     where
         Ff: FnMut(Ai) -> Ao,
         Fd: FnMut(Hi, &[Node<Ai, Hi>]) -> Ho,
     {
         match self {
-            Node::Atom(f) => Node::Atom(file_cb(f)),
+            Node::Atom(f) => Node::Atom(file_fn(f)),
             Node::List(f, fs) => Node::List(
-                dir_cb(f, &fs),
-                fs.into_iter().map(|f| f._map(dir_cb, file_cb)).collect(),
+                dir_fn(f, &fs),
+                fs.into_iter().map(|f| f._map(dir_fn, file_fn)).collect(),
             ),
         }
     }
 
-    fn _map_ref<Ao, Ho, Ff, Fd>(&self, dir_cb: &mut Fd, file_cb: &mut Ff) -> Node<Ao, Ho>
+    fn _map_ref<Ao, Ho, Ff, Fd>(&self, dir_fn: &mut Fd, file_fn: &mut Ff) -> Node<Ao, Ho>
     where
         Ff: FnMut(&Ai) -> Ao,
         Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> Ho,
     {
         match self {
-            Node::Atom(f) => Node::Atom(file_cb(&f)),
+            Node::Atom(f) => Node::Atom(file_fn(&f)),
             Node::List(f, fs) => Node::List(
-                dir_cb(&f, &fs),
-                fs.into_iter().map(|f| f._map_ref(dir_cb, file_cb)).collect(),
-            ),
-        }
-    }
-
-    pub fn cmap_ref<'a, 'h, Ao, Ho, Ff, Fd>(&self, mut dir_cb: Fd, mut file_cb: Ff) -> Node<&'a Ao, &'h Ho>
-    where
-        Ff: FnMut(&Ai) -> &'a Ao,
-        Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> &'h Ho,
-    {
-        self._cmap_ref(&mut dir_cb, &mut file_cb)
-    }
-
-    pub fn _cmap_ref<'a, 'h, Ao, Ho, Ff, Fd>(&self, dir_cb: &mut Fd, file_cb: &mut Ff) -> Node<&'a Ao, &'h Ho>
-    where
-        Ff: FnMut(&Ai) -> &'a Ao,
-        Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> &'h Ho,
-    {
-        match self {
-            Node::Atom(f) => Node::Atom(file_cb(&f)),
-            Node::List(f, fs) => Node::List(
-                dir_cb(&f, &fs),
-                fs.into_iter().map(|f| f._cmap_ref(dir_cb, file_cb)).collect(),
+                dir_fn(&f, &fs),
+                fs.into_iter().map(|f| f._map_ref(dir_fn, file_fn)).collect(),
             ),
         }
     }
