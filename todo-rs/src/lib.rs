@@ -5,11 +5,11 @@ pub mod conf;
 pub mod filstu;
 pub mod out;
 
-const CONF_EXT: &'static str = "toml";
-const CONF_NAME: &'static str = "config";
-const LOCAL_CONF_NAME: &'static str = "todo";
-pub const CONF_LEAF: &'static str = const_format::formatcp!("{CONF_NAME}.{CONF_EXT}");
-pub const LOCAL_CONF_LEAF: &'static str = const_format::formatcp!(".{LOCAL_CONF_NAME}.{CONF_EXT}");
+const CONF_EXT: &str = "toml";
+const CONF_NAME: &str = "config";
+const LOCAL_CONF_NAME: &str = "todo";
+pub const CONF_LEAF: &str = const_format::formatcp!("{CONF_NAME}.{CONF_EXT}");
+pub const LOCAL_CONF_LEAF: &str = const_format::formatcp!(".{LOCAL_CONF_NAME}.{CONF_EXT}");
 
 #[derive(thiserror::Error, Debug)]
 pub enum TDError {

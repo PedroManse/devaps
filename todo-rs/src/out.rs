@@ -64,7 +64,7 @@ pub fn show_todos(flst: Node<FPath, DPath>, cfg: &Config) -> Node<String, DPath>
     flst.map(
         |d, _| d,
         |f| {
-            let count = f.count_todos(&cfg);
+            let count = f.count_todos(cfg);
             let count = match count {
                 Ok(0) => "0".green(),
                 Ok(n) => n.to_string().yellow(),
@@ -93,7 +93,7 @@ impl fmt::Display for TextReport {
                 // skip first directory
                 let name = fl
                     .from
-                    .into_iter()
+                    .iter()
                     .skip(1)
                     .collect::<PathBuf>()
                     .display()
@@ -140,7 +140,7 @@ impl<RF> IntoReport<RF> for Report
 where RF: From<Report>
 {
     type Error = ();
-    fn into_report(self, cfg: &Config) -> Result<RF, Self::Error> {
+    fn into_report(self, _: &Config) -> Result<RF, Self::Error> {
         Ok(self.into())
     }
 }
@@ -157,7 +157,7 @@ where Report: IntoReport<R>
         |d, _| d,
         |f| {
             let reports: Vec<Todo> = f
-                .report_todos(&cfg)?
+                .report_todos(cfg)?
                 .into_iter()
                 .map(|(pos, text)| Todo { pos, text })
                 .collect();

@@ -52,10 +52,10 @@ impl<Ai, Hi> Node<Ai, Hi> {
         Fd: FnMut(&Hi, &[Node<Ai, Hi>]) -> Ho,
     {
         match self {
-            Node::Atom(f) => Node::Atom(file_fn(&f)),
+            Node::Atom(f) => Node::Atom(file_fn(f)),
             Node::List(f, fs) => Node::List(
-                dir_fn(&f, &fs),
-                fs.into_iter().map(|f| f._map_ref(dir_fn, file_fn)).collect(),
+                dir_fn(f, fs),
+                fs.iter().map(|f| f._map_ref(dir_fn, file_fn)).collect(),
             ),
         }
     }
@@ -69,7 +69,7 @@ impl<Ai, Hi> Node<Ai, Hi> {
     pub fn list(&self) -> Option<(&Hi, &[Self])> {
         match self {
             Node::Atom(..) => None,
-            Node::List(h, xs) => Some((h, &xs)),
+            Node::List(h, xs) => Some((h, xs)),
         }
     }
     pub fn into_atoms(self) -> Vec<Ai> {
@@ -109,7 +109,7 @@ where
                 })
                 .unwrap_or(false)
         })
-        .map(|f| read_dir_fitered(&f?.path(), filter))
+        .map(|f| read_dir_fitered(f?.path(), filter))
         .collect();
     Ok(Entry::List(DPath(dir.to_owned()), out?))
 }

@@ -55,7 +55,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_todo_finders<'a, 'p>(&'a self, path: &'p Path) -> Vec<&'a Regex> {
+    pub fn get_todo_finders<'a>(&'a self, path: &Path) -> Vec<&'a Regex> {
         let path = path
             .to_str()
             .map(String::from)
