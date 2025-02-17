@@ -19,7 +19,14 @@ pub struct FileTodos {
     pub todos: Vec<Todo>,
 }
 
-pub struct Report(Node<Result<FileTodos, TDError>, DPath>);
+pub struct Report(pub Node<Result<FileTodos, TDError>, DPath>);
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum DMid {
+    FileMid(Vec<Todo>, PathBuf),
+    File(Vec<Todo>),
+    Dir(JsonR),
+}
 
 #[derive(Debug, Serialize, PartialEq, Eq, Clone)]
 #[serde(untagged)]
@@ -31,8 +38,34 @@ pub enum D{
 pub struct JsonR(pub HashMap<PathBuf, D>);
 
 #[derive(Serialize)]
-pub struct JSONReport(Vec<JsonR>);
+pub struct JSONReport(JsonR);
 pub struct TextReport(Node<Result<FileTodos, TDError>, DPath>);
+type Nd = Node<Result<FileTodos, TDError>, DPath>;
+
+pub mod json {
+    use super::*;
+    fn node_update_parent(node: Nd, parent: &mut HashMap<PathBuf, D>) -> Result<(), TDError> {
+        match node {
+            Node::Atom(f) => {
+                let f = f?;
+                parent.insert(f.from, D::File(f.todos));
+            }
+            Node::List(h, xs) => {
+                let jr = filstu_to_jsonr(xs)?;
+                parent.insert(h.0, D::Dir(jr));
+            }
+        };
+        Ok(())
+    }
+
+    pub fn filstu_to_jsonr(xs: Vec<Nd>) -> Result<JsonR, TDError> {
+        let mut r: HashMap<PathBuf, D> = HashMap::new();
+        for x in xs.into_iter() {
+            node_update_parent(x, &mut r)?;
+        }
+        Ok(JsonR(r))
+    }
+}
 
 pub fn show_todos(flst: Node<FPath, DPath>, cfg: &Config) -> Node<String, DPath> {
     flst.map(
