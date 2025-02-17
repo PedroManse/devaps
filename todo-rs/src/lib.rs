@@ -21,6 +21,10 @@ pub enum TDError {
     IOError(#[from] std::io::Error),
     #[error("Config file not found")]
     ConfigNotFound,
+    #[error("Can't start JSON report from file, only from a directory")]
+    TriedJSONReportFromFile,
+    #[error(transparent)]
+    JSONSerdeError(#[from] serde_json::Error),
 }
 
 pub fn rev_find_config() -> Option<PathBuf> {
