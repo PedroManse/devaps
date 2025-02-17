@@ -103,7 +103,7 @@ impl fmt::Display for TextReport {
                 for t in &fl.todos {
                     f.write_char('\t')?;
                     f.write_str(&t.text)?;
-                    //f.push('\n');
+                    f.write_char('\n')?;
                 }
                 f.write_char('\n')
             },
