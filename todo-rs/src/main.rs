@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
-
 use todo_rs::*;
 use conf::{Config, ConfigRaw};
 
-use self::out::{JSONReport, JsonR, Report, TextReport, D};
+use self::filstu::{DPath, FPath, Node};
+use self::out::{JSONReport, TextReport};
 
 fn main() -> Result<(), TDError> {
     let config_path = rev_find_config()
@@ -15,19 +13,40 @@ fn main() -> Result<(), TDError> {
     let cfg: Config = cfg.try_into()?;
 
     let flst = filstu::read_dir_fitered(".", &cfg)?;
-    //println!("{flst}");
-    //let todos_display = show_todos(flst, &cfg);
-    //println!("{todos_display}");
 
-    let json_todos_report: Report = out::make_report(flst.clone(), &cfg);
-    //println!("{todos_report:?}");
-    let jout = match json_todos_report.0 {
-        filstu::Node::List(_, xs) => {
-            out::json::filstu_to_jsonr(xs)?
-        },
-        _=>panic!()
-    };
-    print!("{}",  serde_json::to_string(&jout).unwrap());
+    let args: Vec<_> = std::env::args().skip(1).collect();
+    let xs: Vec<&str> = args.iter().map(|f|f.as_str()).collect();
+    match &xs[..] {
+        ["--tree"] | [] => {
+            display_report(flst, cfg)
+        }
+        ["--json"] => {
+            make_json_report(flst, cfg)
+        }
+        ["--text"] => {
+            make_text_report(flst, cfg)
+        }
+        _=>{
+            panic!()
+        }
+    }
+}
 
+fn display_report(flst: Node<FPath, DPath>, cfg: Config)  -> Result<(), TDError>{
+    let tds = out::show_todos(flst, &cfg);
+    println!("{tds}");
+    Ok(())
+}
+
+fn make_json_report(flst: Node<FPath, DPath>, cfg: Config) -> Result<(), TDError> {
+    let jsout: JSONReport = out::make_report(flst, &cfg)?;
+    let out = serde_json::to_string(&jsout)?;
+    print!("{out}");
+    Ok(())
+}
+
+fn make_text_report(flst: Node<FPath, DPath>, cfg: Config) -> Result<(), TDError> {
+    let out: TextReport = out::make_report(flst, &cfg)?;
+    print!("{out}");
     Ok(())
 }
