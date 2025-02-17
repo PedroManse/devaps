@@ -35,25 +35,50 @@ mod json {
         Dir(JsonR),
     }
     #[derive(Debug, Serialize, PartialEq, Eq, Clone)]
-    pub(super) struct JsonR(HashMap<PathBuf, D>);
+    pub(super) struct JsonR(HashMap<JPath, D>);
+    #[derive(Debug, PartialEq, Eq, Clone, Hash)]
+    struct JPath(PathBuf);
 
-    fn node_update_parent(node: Nd, parent: &mut HashMap<PathBuf, D>) -> Result<(), TDError> {
+    use serde::{Serialize, Serializer};
+    impl Serialize for JPath {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self.0.file_name().map(|f| f.to_string_lossy()) {
+            Some(x) => serializer.serialize_str(&x),
+            None if self.0.components().count() != 1 => serializer.serialize_str("File not UTF-8"),
+            None => serializer.serialize_str("."),
+        }
+        
+    }
+}
+
+
+    fn node_update_parent(node: Nd, parent: &mut HashMap<JPath, D>) -> Result<(), TDError> {
         match node {
             Node::Atom(f) => {
                 let f = f?;
-                parent.insert(f.from, D::File(f.todos));
+                parent.insert(JPath(f.from), D::File(f.todos));
             }
             Node::List(h, xs) => {
                 let jr = filstu_to_jsonr(xs)?;
-                parent.insert(h.0, D::Dir(jr));
+                parent.insert(JPath(h.0), D::Dir(jr));
             }
         };
         Ok(())
     }
 
-    pub(super) fn filstu_to_jsonr(xs: Vec<Nd>) -> Result<JsonR, TDError> {
-        let mut r: HashMap<PathBuf, D> = HashMap::new();
-        for x in xs.into_iter() {
+    pub (super) fn filstu_to_jsonreport(root: DPath, xs: Vec<Nd>) -> Result<JSONReport, TDError> {
+        let mut r = HashMap::new();
+        let jsr = filstu_to_jsonr(xs)?;
+        r.insert(JPath(root.0), D::Dir(jsr));
+        Ok(JSONReport(JsonR(r)))
+    }
+
+    fn filstu_to_jsonr(xs: Vec<Nd>) -> Result<JsonR, TDError> {
+        let mut r = HashMap::new();
+        for x in xs {
             node_update_parent(x, &mut r)?;
         }
         Ok(JsonR(r))
@@ -126,8 +151,8 @@ impl IntoReport<JSONReport> for Report {
     type Error = TDError;
     fn into_report(self: Report, _: &Config) -> Result<JSONReport, Self::Error> {
         match self.0 {
-            Node::List(_, xs) => {
-                json::filstu_to_jsonr(xs).map(JSONReport)
+            Node::List(h, xs) => {
+                json::filstu_to_jsonreport(h, xs)
             },
             _=>{
                 Err(TDError::TriedJSONReportFromFile)
