@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fmt::{self, Write};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Hash, PartialEq, Eq, Clone)]
 pub struct Todo {
     pub pos: usize,
     pub text: String,
@@ -20,14 +20,15 @@ pub struct FileTodos {
 }
 
 pub struct Report(Node<Result<FileTodos, TDError>, DPath>);
-#[derive(Serialize)]
+
+#[derive(Debug, Serialize, PartialEq, Eq, Clone)]
 #[serde(untagged)]
-enum D{
-    File(FileTodos),
+pub enum D{
+    File(Vec<Todo>),
     Dir(JsonR),
 }
-#[derive(Serialize)]
-struct JsonR(HashMap<PathBuf, D>);
+#[derive(Debug, Serialize, PartialEq, Eq, Clone)]
+pub struct JsonR(pub HashMap<PathBuf, D>);
 
 #[derive(Serialize)]
 pub struct JSONReport(Vec<JsonR>);
@@ -51,12 +52,6 @@ pub fn show_todos(flst: Node<FPath, DPath>, cfg: &Config) -> Node<String, DPath>
         },
     )
 }
-
-//impl fmt::Display for JSONReport {
-//    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//        
-//    }
-//}
 
 // TODO: I'm calling .map/.map_ref (push action, not pull) on the same Node 3 times
 impl fmt::Display for TextReport {
@@ -102,16 +97,7 @@ impl From<Report> for TextReport {
 
 impl From<Report> for JSONReport {
     fn from(value: Report) -> Self {
-        let mut h = HashMap::new();
-        value.0.map(|d, x|{
-            let y = x.into_iter().filter_map(|f|f.atom()).map(|f|(&f).clone().unwrap());
-            h.insert(d.0, () );
-        }, |f|f);
         todo!()
-        //JSONReport(match value.0.map(|d, _|d.0, |f|f.unwrap()) {
-        //    Node::Atom(_)=>panic!(),
-        //    Node::List(_, h)=>h,
-        //})
     }
 }
 
