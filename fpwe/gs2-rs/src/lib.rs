@@ -27,7 +27,7 @@ pub struct StatusReport<'r> {
 
 fn get_branch(repo: &Repository) -> GitResult<String> {
     Reference::normalize_name(
-        repo.head()?.shorthand().unwrap_or("<unknown branch>"),
+        &repo.head().map(|h|h.shorthand().unwrap_or("<unknown branch>").to_string()).unwrap_or("<HEADLESS>".to_string()),
         ReferenceFormat::ALLOW_ONELEVEL | ReferenceFormat::REFSPEC_SHORTHAND,
     )
 }

@@ -1,24 +1,33 @@
 use gs2::*;
 
-fn main() -> Result<(), git2::Error> {
+fn main() {
     let repo = match git2::Repository::discover(".") {
         Ok(repo) => repo,
-        Err(_) => return Ok(()),
+        Err(_) => return
     };
+    if repo.is_bare() {
+        print!(" \x1b[1;4;35m<bare>\x1b[0m ");
+        return;
+    }
 
     // get branch name, remote
-    let mut status_reporter = StatusReport::new(&repo)?;
+    let mut status_reporter = match StatusReport::new(&repo) {
+        Ok(s)=>s,
+        Err(e)=>{
+            eprintln!("{e}");
+            return
+        }
+    };
     // get diffs
-    status_reporter.update_statuses()?;
+    if let Err(e) = status_reporter.update_statuses() {
+        eprintln!("{e}");
+        return
+    };
     // get remote graph
-    status_reporter.update_graph()?;
+    if let Err(e) = status_reporter.update_graph() {
+        eprintln!("{e}");
+        return
+    };
     print!("{status_reporter}");
-
-    Ok(())
 }
-
-//refs/remotes/origin/master
-//52cd28549250197520c0859639cd66426b985b7b
-//refs/heads/master
-//52cd28549250197520c0859639cd66426b985b7b
 
