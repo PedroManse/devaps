@@ -6,8 +6,6 @@ pub enum TemplrsError {
 	NonUtf8Path(std::ffi::OsString),
 }
 
-//TODO: set suffix .sh for linux, .ps1 for windows
-
 impl std::fmt::Display for TemplrsError {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		use TemplrsError::*;
@@ -42,8 +40,18 @@ impl ToRun {
 	}
 }
 
-pub const EXEC: &str = "bash";
-pub const EXT: &str = ".sh";
+#[cfg(target_os="linux")]
+pub mod current {
+    pub const EXEC: &str = "bash";
+    pub const EXT: &str = ".sh";
+}
+#[cfg(target_os="windows")]
+pub mod current {
+    pub const EXEC: &str = "powershell";
+    pub const EXT: &str = ".ps1";
+}
+pub use current::*;
+
 pub fn try_gather(mut cli_args: std::env::Args) -> anyhow::Result<ToRun> {
 	let mut name = cli_args
 		.next()
