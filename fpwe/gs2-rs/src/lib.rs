@@ -157,7 +157,7 @@ impl<'r> std::fmt::Display for StatusReport<'r> {
             | self.conflict);
         write!(f, " \x1b[1;4;35m{}\x1b[0m ", self.branch)?;
         if clean {
-            write!(f, "\x1b[32mÜ")?
+            write!(f, "\x1b[32m✓")?
         };
         if self.new {
             write!(f, "\x1b[31m+")?
