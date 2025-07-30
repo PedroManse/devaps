@@ -4,7 +4,8 @@ type GitResult<T> = Result<T, GErr>;
 
 fn get_remote(repo: &Repository) -> Option<Remote> {
     let remote_name = repo
-        .remotes().ok()?
+        .remotes()
+        .ok()?
         .into_iter()
         .flatten()
         .next()?
@@ -27,7 +28,10 @@ pub struct StatusReport<'r> {
 
 fn get_branch(repo: &Repository) -> GitResult<String> {
     Reference::normalize_name(
-        &repo.head().map(|h|h.shorthand().unwrap_or("<unknown branch>").to_string()).unwrap_or("<HEADLESS>".to_string()),
+        &repo
+            .head()
+            .map(|h| h.shorthand().unwrap_or("<unknown branch>").to_string())
+            .unwrap_or("<HEADLESS>".to_string()),
         ReferenceFormat::ALLOW_ONELEVEL | ReferenceFormat::REFSPEC_SHORTHAND,
     )
 }
@@ -81,7 +85,7 @@ impl<'r> StatusReport<'r> {
                 .filter(|(sname, _)| sname.is_some())
                 .map(|(sname, tar)| (sname.unwrap(), tar))
                 .filter(|(sname, _)| sname == local_sname)
-                .map(|(_, tar)| tar )
+                .map(|(_, tar)| tar)
                 .collect();
 
             if let Some(target) = refs.first() {
