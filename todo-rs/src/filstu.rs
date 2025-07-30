@@ -81,7 +81,7 @@ impl<Ai, Hi> Node<Ai, Hi> {
     }
 }
 
-pub fn read_dir_fitered<F, P>(dir: P, filter: &F) -> Result<Entry, std::io::Error>
+pub fn read_dir_filtered<F, P>(dir: P, filter: &F) -> Result<Entry, std::io::Error>
 where
     F: PathFilter,
     P: AsRef<Path>,
@@ -93,7 +93,7 @@ where
         } else {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                "Can't read_dir_fitered a file",
+                "Can't read_dir_filtered a file",
             ));
         }
     }
@@ -109,7 +109,7 @@ where
                 })
                 .unwrap_or(false)
         })
-        .map(|f| read_dir_fitered(f?.path(), filter))
+        .map(|f| read_dir_filtered(f?.path(), filter))
         .collect();
     Ok(Entry::List(DPath(dir.to_owned()), out?))
 }

@@ -12,7 +12,7 @@ fn main() -> Result<(), TDError> {
     let cfg: ConfigRaw = toml::from_str(&config_text)?;
     let cfg: Config = cfg.try_into()?;
 
-    let flst = filstu::read_dir_fitered(".", &cfg)?;
+    let flst = filstu::read_dir_filtered(".", &cfg)?;
 
     let args: Vec<_> = std::env::args().skip(1).collect();
     let xs: Vec<&str> = args.iter().map(|f|f.as_str()).collect();
