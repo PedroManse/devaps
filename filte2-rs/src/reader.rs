@@ -1,7 +1,7 @@
 use crate::*;
 
 #[derive(Debug)]
-enum CdFilter {
+pub enum CdFilter {
     And,
     Or,
     Not,
@@ -9,53 +9,44 @@ enum CdFilter {
     Raw(String),
 }
 
+impl CdFilter {
+    fn parse(arg: String) -> CdFilter {
+        match arg.as_ref() {
+            "and[" => CdFilter::And,
+            "not[" => CdFilter::Not,
+            "or[" => CdFilter::Or,
+            "]" => CdFilter::Close,
+            _ => CdFilter::Raw(arg),
+        }
+    }
+}
+
 pub fn parse(args: impl Iterator<Item = String>) -> Result<Filter, FilteError> {
-    let mut cmds = compile(args);
-    next(&mut cmds)
+    let mut cmds = args.map(CdFilter::parse);
+    read_next(&mut cmds)
 }
 
-fn compile(args: impl Iterator<Item = String>) -> impl Iterator<Item = CdFilter> {
-    args.map(|arg| match arg.as_ref() {
-        "and[" => CdFilter::And,
-        "not[" => CdFilter::Not,
-        "or[" => CdFilter::Or,
-        "]" => CdFilter::Close,
-        _ => CdFilter::Raw(arg),
-    })
-}
-
-fn next(args: &mut impl Iterator<Item = CdFilter>) -> Result<Filter, FilteError> {
+fn read_next(args: &mut impl Iterator<Item = CdFilter>) -> Result<Filter, FilteError> {
     let arg = args.next().ok_or(FilteError::MissingCommand)?;
     match arg {
-        CdFilter::Not => csin(args, Filter::Not),
-        CdFilter::And => cvec(args, Filter::And),
-        CdFilter::Or => cvec(args, Filter::Or),
+        CdFilter::Not => read_not(args),
+        CdFilter::And => read_many(args, Filter::And),
+        CdFilter::Or => read_many(args, Filter::Or),
         CdFilter::Close => Err(FilteError::NeedlessClose),
-        CdFilter::Raw(s) => raw(s),
+        CdFilter::Raw(s) => Filter::try_from(s),
     }
 }
 
-fn csin(
-    args: &mut impl Iterator<Item = CdFilter>,
-    cnv: fn(Box<Filter>) -> Filter,
-) -> Result<Filter, FilteError> {
-    let arg = args.next().ok_or(FilteError::MissingClose)?;
-    let out = match arg {
-        CdFilter::Not => csin(args, Filter::Not),
-        CdFilter::And => cvec(args, Filter::And),
-        CdFilter::Or => cvec(args, Filter::Or),
-        CdFilter::Close => Err(FilteError::MissingCommand)?,
-        CdFilter::Raw(r) => raw(r),
-    }?;
-    let closer = args.next().ok_or(FilteError::MissingClose)?;
-    if let CdFilter::Close = closer {
-        Ok(cnv(Box::new(out)))
-    } else {
-        Err(FilteError::TooManyFilters)
+fn read_not(args: &mut impl Iterator<Item = CdFilter>) -> Result<Filter, FilteError> {
+    let out = read_next(args)?;
+    match args.next() {
+        None => Err(FilteError::MissingCommand),
+        Some(CdFilter::Close) => Ok(Filter::Not(Box::new(out))),
+        Some(_) => Err(FilteError::TooManyFilters),
     }
 }
 
-fn cvec(
+fn read_many(
     args: &mut impl Iterator<Item = CdFilter>,
     cnv: fn(Vec<Filter>) -> Filter,
 ) -> Result<Filter, FilteError> {
@@ -63,23 +54,19 @@ fn cvec(
     loop {
         let arg = args.next().ok_or(FilteError::MissingClose)?;
         out.push(match arg {
-            CdFilter::Not => csin(args, Filter::Not),
-            CdFilter::And => cvec(args, Filter::And),
-            CdFilter::Or => cvec(args, Filter::Or),
+            CdFilter::Not => read_not(args),
+            CdFilter::And => read_many(args, Filter::And),
+            CdFilter::Or => read_many(args, Filter::Or),
             CdFilter::Close => break,
-            CdFilter::Raw(r) => raw(r),
+            CdFilter::Raw(r) => Filter::try_from(r),
         }?);
     }
     Ok(cnv(out))
 }
 
-fn raw(pattern: String) -> Result<Filter, FilteError> {
-    RawFilter::try_from(pattern).map(Filter::Raw)
-}
-
-impl TryFrom<String> for RawFilter {
+impl TryFrom<String> for Filter {
     type Error = FilteError;
-    fn try_from(tx: String) -> Result<RawFilter, FilteError> {
+    fn try_from(tx: String) -> Result<Filter, FilteError> {
         use Mode::*;
         let mut chars = tx.chars();
         let mut mode = chars.next().ok_or(FilteError::MissingText)?;
@@ -101,6 +88,6 @@ impl TryFrom<String> for RawFilter {
             'g' | '?' => Glob(glob::Pattern::new(&pattern)?),
             other => Err(FilteError::NoFilter(other))?,
         };
-        Ok(RawFilter { filter, invert })
+        Ok(Filter::Raw(RawFilter { filter, invert }))
     }
 }
