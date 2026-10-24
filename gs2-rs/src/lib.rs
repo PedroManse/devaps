@@ -2,15 +2,14 @@ use git2::Error as GErr;
 use git2::*;
 type GitResult<T> = Result<T, GErr>;
 
-fn get_remote(repo: &Repository) -> Option<Remote> {
-    let remote_name = repo
-        .remotes()
+fn get_remote_name(repo: &'_ Repository) -> Option<String> {
+    repo.remotes()
         .ok()?
-        .into_iter()
+        .iter()
         .flatten()
-        .next()?
-        .to_owned();
-    repo.find_remote(&remote_name).ok()
+        .flatten()
+        .next()
+        .map(|n| n.to_owned())
 }
 
 pub struct StatusReport<'r> {
@@ -22,24 +21,21 @@ pub struct StatusReport<'r> {
     renamed: bool,
     conflict: bool,
     branch: String,
-    remote: Option<Remote<'r>>,
+    remote: Option<String>,
     diverge: bool,
 }
 
-fn get_branch(repo: &Repository) -> GitResult<String> {
-    Reference::normalize_name(
-        &repo
-            .head()
-            .map(|h| h.shorthand().unwrap_or("<unknown branch>").to_string())
-            .unwrap_or("<HEADLESS>".to_string()),
-        ReferenceFormat::ALLOW_ONELEVEL | ReferenceFormat::REFSPEC_SHORTHAND,
-    )
+fn get_branch_name(repo: &Repository) -> String {
+    repo.head()
+        .ok()
+        .and_then(|h| h.shorthand().ok().map(str::to_owned))
+        .unwrap_or_else(|| "<HEADLESS>".to_owned())
 }
 
 impl<'r> StatusReport<'r> {
     pub fn new(repo: &'r Repository) -> GitResult<Self> {
-        let branch = get_branch(repo)?;
-        let remote = get_remote(repo);
+        let branch = get_branch_name(repo);
+        let remote = get_remote_name(repo);
         Ok(StatusReport {
             repo,
             staged: false,   // →
@@ -59,72 +55,36 @@ impl<'r> StatusReport<'r> {
         Ok(())
     }
 
-    pub fn get_graph(&mut self) -> Result<bool, GErr> {
-        if let Some(remote) = &self.remote {
-            let local = self.repo.head()?;
-            let local_target = local.target().unwrap();
-            let local_sname = local.shorthand().unwrap();
-
-            let remote_name = format!("{}/", remote.name().unwrap());
-            let refs: GitResult<_> = self.repo.references()?.collect();
-            let refs: Vec<_> = refs?;
-            let refs: Vec<_> = refs
-                .into_iter()
-                .map(|refe| {
-                    let sname = refe.shorthand().map(String::from);
-                    let tar = refe.target();
-                    (sname, tar)
-                })
-                .filter(|(sname, tar)| sname.is_some() && tar.is_some())
-                .map(|(sname, tar)| {
-                    (
-                        sname.unwrap().strip_prefix(&remote_name).map(String::from),
-                        tar.unwrap(),
-                    )
-                })
-                .filter(|(sname, _)| sname.is_some())
-                .map(|(sname, tar)| (sname.unwrap(), tar))
-                .filter(|(sname, _)| sname == local_sname)
-                .map(|(_, tar)| tar)
-                .collect();
-
-            if let Some(target) = refs.first() {
-                if *target == local_target {
-                    Ok(false)
-                } else {
-                    Ok(true)
-                }
-            } else {
-                Ok(true)
-            }
-        } else {
-            Ok(false)
+    pub fn get_graph(&self) -> GitResult<bool> {
+        let Some(remote) = &self.remote else {
+            return Ok(false);
+        };
+        let local = self.repo.head()?;
+        let (Some(local_target), Ok(local_sname)) = (local.target(), local.shorthand()) else {
+            return Ok(false);
+        };
+        let remote_ref = format!("refs/remotes/{remote}/{local_sname}");
+        match self.repo.find_reference(&remote_ref) {
+            Ok(r) => Ok(r.target() != Some(local_target)),
+            Err(e) if e.code() == ErrorCode::NotFound => Ok(true),
+            Err(e) => Err(e),
         }
     }
 
-    //pub fn remote_graph(&mut self, local: Oid, upstream: Oid) -> GitResult<(usize, usize)> {
-    //    self.remote.connect(Direction::Fetch)?;
-    //    let upstream = self.remote.list()?.first().unwrap().oid();
-    //    self.remote.disconnect()?;
-    //    self.repo.graph_ahead_behind(local, upstream)
-    //}
-
-    pub fn get_statuses(&self) -> GitResult<Vec<Status>> {
-        Ok(self
-            .repo
-            .statuses(None)?
-            .iter()
-            .map(|a| a.status())
-            .filter(|status| !status.is_empty() && !status.is_ignored())
-            .collect())
-    }
-
     pub fn update_statuses(&mut self) -> Result<(), GErr> {
-        self.get_statuses()?
-            .into_iter()
-            .for_each(|stat| self.update(stat));
+        let mut opts = StatusOptions::new();
+        opts.include_ignored(false)
+            .include_untracked(true)
+            .recurse_untracked_dirs(false)
+            .exclude_submodules(true)
+            .update_index(false);
+        let statuses = self.repo.statuses(Some(&mut opts))?;
+        for entry in &statuses {
+            self.update(entry.status());
+        }
         Ok(())
     }
+
     fn update(&mut self, status: Status) {
         let is_index_new = status.is_index_new();
         let is_index_modified = status.is_index_modified();
